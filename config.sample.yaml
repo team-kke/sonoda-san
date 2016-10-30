@@ -1,0 +1,5 @@
+# This is a sample config. You can start to create your own config
+# from copying and modifying this.
+
+# Port to which the webhook server listens
+port: 8080
