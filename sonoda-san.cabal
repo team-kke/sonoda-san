@@ -15,9 +15,11 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:
+  exposed-modules:     Cmd
                        Config
+                       Response
                        Server
+                       Server.Webhook
   build-depends:       base >= 4.7 && < 5
                      , wai
                      , optparse-applicative
