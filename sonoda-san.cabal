@@ -17,6 +17,8 @@ library
   hs-source-dirs:      src
   exposed-modules:     Cmd
                        Config
+                       Line.Webhook
+                       Line.Webhook.Types
                        Response
                        Server
                        Server.Webhook
