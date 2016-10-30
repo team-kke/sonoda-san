@@ -1,0 +1,76 @@
+<head>
+  <title>Webhook Tester</title>
+  <meta charset='UTF-8'>
+  <style>
+  textarea {
+    width: 400px;
+    height: 100px;
+  }
+  </style>
+</head>
+
+<h1>Webhook Tester</h1>
+<p>For webhook formats, please refer to <a href='https://devdocs.line.me/en/#webhooks'>the LINE API reference.</a></p>
+
+<div id='events'>
+</div>
+
+<p>
+  <input placeholder='webhook url' id='url'>
+  <input placeholder='channel secret' id='secret'>
+</p>
+
+<p>
+  <button id='add-event'>add an event</button>
+  <button id='send'>send</button>
+</p>
+
+<template id='event-template'>
+  <div class='event'>
+    <textarea></textarea>
+    <button class='remove'>remove</button>
+  </div>
+</template>
+
+<script>
+  const $ = document.querySelector.bind(document);
+  const tpl = $('#event-template').innerHTML.trim();
+
+  $('#add-event').addEventListener('click', () => {
+    $('#events').innerHTML += tpl;
+  });
+
+  $('#send').addEventListener('click', () => {
+    const events = $('#events').querySelectorAll('.event textarea');
+    const webhook = {
+      url: $('#url').value,
+      secret: $('#secret').value
+    };
+    const content = {
+      events: Array.from(events).map((event) => JSON.parse(event.value))
+    };
+    post('/', { webhook, content });
+  });
+
+  $('body').addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON' && e.target.className === 'remove') {
+      e.target.parentNode.remove();
+    }
+  });
+
+  $('#add-event').click();
+</script>
+
+<script>
+  const post = (url, body) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState !== XMLHttpRequest.DONE) return;
+      if (xhr.status !== 200) throw xhr;
+      console.log('success');
+    };
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send(JSON.stringify(body));
+  };
+</script>
