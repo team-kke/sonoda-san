@@ -1,6 +1,6 @@
-module Line.Webhook.Types
-  ( Event (..)
-  , Result (..)
+module Line.Webhook.Types (
+  Event (..),
+  Result (..),
   ) where
 
 -- FIXME

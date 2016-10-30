@@ -1,5 +1,5 @@
-module Server.Webhook
-  ( app
+module Server.Webhook (
+  app,
   ) where
 
 import Line.Webhook (webhookApp, Result(..))

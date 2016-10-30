@@ -1,5 +1,5 @@
-module Response
-  ( response404
+module Response (
+  response404,
   ) where
 
 import Network.HTTP.Types.Status

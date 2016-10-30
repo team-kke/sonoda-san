@@ -1,5 +1,5 @@
-module Server
-  ( app
+module Server (
+  app,
   ) where
 
 import Network.Wai

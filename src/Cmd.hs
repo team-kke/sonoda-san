@@ -1,5 +1,5 @@
-module Cmd
-  ( getConfigPath
+module Cmd (
+  getConfigPath,
   ) where
 
 import Options.Applicative

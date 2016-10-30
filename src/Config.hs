@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-module Config
-  ( getPort
+module Config (
+  getPort,
   ) where
 
 import Cmd (getConfigPath)

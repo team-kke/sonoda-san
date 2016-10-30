@@ -1,6 +1,6 @@
-module Line.Webhook
-  ( webhookApp
-  , module Line.Webhook.Types
+module Line.Webhook (
+  module Line.Webhook.Types,
+  webhookApp,
   ) where
 
 import Line.Webhook.Types
