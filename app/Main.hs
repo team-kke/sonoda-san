@@ -1,6 +1,11 @@
 module Main where
 
-import Lib
+import Config (getPort)
+import Network.Wai.Handler.Warp (run)
+import Server (app)
 
 main :: IO ()
-main = someFunc
+main = do
+  port <- getPort
+  putStrLn $ "http://0.0.0.0:" ++ show port
+  run port app
