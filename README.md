@@ -8,6 +8,10 @@
 
 A LINE bot likely having something to do with [Sonoda Umi](https://ja.wikipedia.org/wiki/%CE%9C%27s#.E5.9C.92.E7.94.B0_.E6.B5.B7.E6.9C.AA.EF.BC.88.E3.81.9D.E3.81.AE.E3.81.A0_.E3.81.86.E3.81.BF.EF.BC.89).
 
+## Development
+
+It's still under heavy development. For development memo, please refer to [a wiki page](https://github.com/team-kke/sonoda-san/wiki/Development-Memo).
+
 ## License
 
 [BSD3](LICENSE)
