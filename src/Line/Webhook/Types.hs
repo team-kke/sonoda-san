@@ -1,10 +1,16 @@
 module Line.Webhook.Types (
   Event (..),
-  Result (..),
+  WebhookResult (..),
+  WebhookFailure (..),
   ) where
+
+import Network.Wai
 
 -- FIXME
 data Event
 
--- FIXME
-data Result = None
+data WebhookResult = Ok
+                | WaiResponse Response
+                | WaiApp Application
+
+data WebhookFailure = SignatureVerificationFailed deriving Show
