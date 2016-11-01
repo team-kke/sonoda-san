@@ -17,7 +17,8 @@ webhookApp :: ([Event] -> IO WebhookResult)
            -> (WebhookFailure -> Application)
            -> Application
 webhookApp handler fail req f
-  | validateSignature req = fail SignatureVerificationFailed req f
+  | not (validateSignature req) =
+      fail SignatureVerificationFailed req f
   | otherwise = do
       body <- lazyRequestBody req
       case decode' body of
