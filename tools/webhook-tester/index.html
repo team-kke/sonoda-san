@@ -25,6 +25,11 @@
   <button id='send'>send</button>
 </p>
 
+<p>
+  <h3>Responses</h3>
+  <div id='responses'></div>
+</p>
+
 <template id='event-template'>
   <div class='event'>
     <textarea></textarea>
@@ -68,12 +73,28 @@
 </script>
 
 <script>
+  const response = (obj) => {
+    const div = document.createElement('div');
+    const status = document.createElement('span');
+    status.textContent = obj.status;
+    status.style.color = obj.status === 200 ? 'blue' : 'red';
+    status.style.marginRight = '5px';
+    const body = document.createElement('span');
+    body.textContent = obj.body;
+    div.appendChild(status);
+    div.appendChild(body);
+    return div;
+  };
+</script>
+
+<script>
   const post = (url, body) => {
     const xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
       if (xhr.readyState !== XMLHttpRequest.DONE) return;
       if (xhr.status !== 200) throw xhr;
-      console.log('success');
+      const obj = JSON.parse(xhr.responseText);
+      $('#responses').appendChild(response(obj));
     };
     xhr.open('POST', url);
     xhr.setRequestHeader('Content-Type', 'application/json');

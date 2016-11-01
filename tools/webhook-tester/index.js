@@ -32,8 +32,10 @@ app.post('/', (req, res) => {
       'Content-Type': 'application/json'
     },
     body: body
-  });
-  res.end();
+  }, (e, r, body) => res.json({
+    status: r.statusCode,
+    body: body,
+  }));
 });
 
 app.post('/webhook', (req, res) => {
