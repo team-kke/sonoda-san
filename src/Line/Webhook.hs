@@ -2,10 +2,11 @@ module Line.Webhook (
   module Line.Webhook.Event,
   module Line.Webhook.Types,
   webhookApp,
-  defaultOnFailure
+  defaultOnFailure,
   ) where
 
 import Data.Aeson (decode')
+import Data.ByteString.Builder (string8)
 import Line.Webhook.Event
 import Line.Webhook.Types
 import Line.Webhook.Validation (validateSignature)
@@ -29,4 +30,5 @@ webhookApp handler fail req f
             WaiApp app -> app req f
 
 defaultOnFailure :: WebhookFailure -> Application
-defaultOnFailure = undefined
+defaultOnFailure failure _ f = f .
+  responseBuilder status400 [] . string8 . show $ failure
