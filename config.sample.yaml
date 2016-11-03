@@ -3,3 +3,7 @@
 
 # Port to which the webhook server listens
 port: 8080
+
+# LINE channel settings
+channelSecret: 'svxqn30ltq6lg75ryy0a82rcc25ykt7e'
+channelAccessToken: 'd0NQKGi+PNLkM0qwFg2BNL03sFteu2HalsdkaKqZBsjLy+ytxvTrQQMxKpcW4zFp0dhL9SwGp5tAgEXFCAafT6orS5mqWxbkD921nf70ODqNVyrJCQCUzGsX7pP32VeK2LKs70IsRhvbWXcfet+/JElqjgibUn/32/9Ly83MP70='
