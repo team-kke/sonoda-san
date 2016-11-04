@@ -13,11 +13,12 @@ import Line.Webhook.Validation (validateSignature)
 import Network.HTTP.Types.Status
 import Network.Wai
 
-webhookApp :: ([Event] -> IO WebhookResult)
+webhookApp :: ChannelSecret
+           -> ([Event] -> IO WebhookResult)
            -> (WebhookFailure -> Application)
            -> Application
-webhookApp handler fail req f
-  | not (validateSignature req) =
+webhookApp secret handler fail req f
+  | not (validateSignature secret req) =
       fail SignatureVerificationFailed req f
   | otherwise = do
       body <- lazyRequestBody req

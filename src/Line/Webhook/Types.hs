@@ -1,8 +1,10 @@
 module Line.Webhook.Types (
+  ChannelSecret,
   WebhookResult (..),
   WebhookFailure (..),
   ) where
 
+import Data.Text
 import Network.Wai
 
 data WebhookResult = Ok
@@ -12,3 +14,5 @@ data WebhookResult = Ok
 data WebhookFailure = SignatureVerificationFailed
                     | MessageDecodeFailed
                     deriving Show
+
+type ChannelSecret = Text

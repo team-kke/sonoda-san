@@ -2,7 +2,8 @@ module Line.Webhook.Validation (
   validateSignature,
   ) where
 
+import Line.Webhook.Types
 import Network.Wai
 
-validateSignature :: Request -> Bool
-validateSignature _ = undefined
+validateSignature :: ChannelSecret -> Request -> Bool
+validateSignature _ _ = undefined
