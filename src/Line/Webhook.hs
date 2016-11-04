@@ -1,10 +1,13 @@
 module Line.Webhook (
   module Line.Webhook.Event,
   module Line.Webhook.Types,
+  webhook,
   webhookApp,
   defaultOnFailure,
   ) where
 
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Except (ExceptT, throwE, runExceptT)
 import Data.Aeson (decode')
 import Data.ByteString.Builder (string8)
 import Line.Webhook.Event
@@ -13,23 +16,33 @@ import Line.Webhook.Validation (validateSignature)
 import Network.HTTP.Types.Status
 import Network.Wai
 
+webhook :: ChannelSecret
+        -> Request
+        -> ExceptT WebhookFailure IO [Event]
+webhook secret req =
+  if not $ validateSignature secret req
+  then throwE SignatureVerificationFailed
+  else do
+    body <- liftIO $ lazyRequestBody req
+    case decode' body of
+      Nothing -> throwE MessageDecodeFailed
+      Just events -> return events
+
+waiResponse :: WebhookResult -> Application
+waiResponse result req f = case result of
+  Ok              -> f $ responseBuilder status200 [] ""
+  WaiResponse res -> f res
+  WaiApp app      -> app req f
+
 webhookApp :: ChannelSecret
            -> ([Event] -> IO WebhookResult)
            -> (WebhookFailure -> Application)
            -> Application
-webhookApp secret handler fail req f
-  | not (validateSignature secret req) =
-      fail SignatureVerificationFailed req f
-  | otherwise = do
-      body <- lazyRequestBody req
-      case decode' body of
-        Nothing -> fail MessageDecodeFailed req f
-        Just events -> do
-          result <- handler events
-          case result of
-            Ok -> f $ responseBuilder status200 [] ""
-            WaiResponse res -> f res
-            WaiApp app -> app req f
+webhookApp secret handler fail req f = do
+  result <- runExceptT $ webhook secret req
+  case result of
+    Right events -> handler events >>= waiResponse <*> pure req <*> pure f
+    Left exception -> fail exception req f
 
 defaultOnFailure :: WebhookFailure -> Application
 defaultOnFailure failure _ f = f .
