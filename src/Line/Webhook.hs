@@ -19,11 +19,11 @@ import Network.Wai
 webhook :: ChannelSecret
         -> Request
         -> ExceptT WebhookFailure IO [Event]
-webhook secret req =
-  if not $ validateSignature secret req
+webhook secret req = do
+  body <- liftIO $ lazyRequestBody req
+  if not $ validateSignature secret req body
   then throwE SignatureVerificationFailed
   else do
-    body <- liftIO $ lazyRequestBody req
     case decode' body of
       Nothing -> throwE MessageDecodeFailed
       Just events -> return events
