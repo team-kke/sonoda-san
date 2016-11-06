@@ -26,7 +26,7 @@ webhook secret req = do
   else do
     case decode' body of
       Nothing -> throwE MessageDecodeFailed
-      Just events -> return events
+      Just (Body events) -> return events
 
 waiResponse :: WebhookResult -> Application
 waiResponse result req f = case result of

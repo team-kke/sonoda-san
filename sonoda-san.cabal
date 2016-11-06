@@ -35,6 +35,7 @@ library
                      , transformers
                      , cryptohash-sha256
                      , base64-bytestring
+                     , time
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
 
