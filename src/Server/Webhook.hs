@@ -3,6 +3,7 @@ module Server.Webhook (
   ) where
 
 import Config (getChannelSecret)
+import Control.Monad (forM_)
 import Line.Webhook (webhookApp, Event, WebhookResult(..), defaultOnFailure)
 import Network.Wai
 
@@ -12,4 +13,6 @@ app req f = do
   webhookApp secret handler defaultOnFailure req f
 
 handler :: [Event] -> IO WebhookResult
-handler _ = return Ok
+handler events = do
+  forM_ events print
+  return Ok
