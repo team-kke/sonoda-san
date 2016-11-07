@@ -10,13 +10,14 @@ import Cmd (getConfigPath)
 import Data.Text (Text)
 import Data.Yaml (FromJSON, decodeFile)
 import GHC.Generics
+import Line.Types (ChannelSecret, ChannelAccessToken)
 import System.Exit (exitFailure)
 
 type Port = Int -- in Network.Wai.Handler.Warp
 
 data Config = Config { port :: Port
-                     , channelSecret :: Text
-                     , channelAccessToken :: Text
+                     , channelSecret :: ChannelSecret
+                     , channelAccessToken :: ChannelAccessToken
                      } deriving Generic
 
 instance FromJSON Config
@@ -31,8 +32,8 @@ config = do
 getPort :: IO Port
 getPort = port <$> config
 
-getChannelSecret :: IO Text
+getChannelSecret :: IO ChannelSecret
 getChannelSecret = channelSecret <$> config
 
-getChannelAccessToken :: IO Text
+getChannelAccessToken :: IO ChannelAccessToken
 getChannelAccessToken = channelAccessToken <$> config
