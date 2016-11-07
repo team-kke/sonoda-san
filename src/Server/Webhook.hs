@@ -2,10 +2,13 @@ module Server.Webhook (
   app,
   ) where
 
-import Config (getChannelSecret)
+import Config (getChannelSecret, getChannelAccessToken)
 import Control.Monad (forM_)
-import Line.Messaging.Webhook (webhookApp, Event, WebhookResult(..), defaultOnFailure)
+import Line.Messaging.API (reply)
+import Line.Messaging.Webhook
 import Network.Wai
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 
 app :: Application
 app req f = do
@@ -14,5 +17,14 @@ app req f = do
 
 handler :: [Event] -> IO WebhookResult
 handler events = do
-  forM_ events print
+  forM_ events handleEvent
   return Ok
+
+handleEvent :: Event -> IO ()
+handleEvent (MessageEvent source _ replyToken (TextMessage _ text))
+  | "園田さん、" `T.isPrefixOf` text = do
+      c <- getChannelAccessToken
+      let x = T.drop 5 text
+      reply c replyToken text
+  | otherwise = return ()
+handleEvent _ = return ()
