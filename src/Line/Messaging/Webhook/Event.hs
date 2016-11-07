@@ -11,6 +11,7 @@ import Data.Aeson.Types (Parser)
 import Data.Text (Text)
 import Data.Time.Clock (UTCTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
+import Line.Messaging.Webhook.Types (ReplyToken)
 
 -- The Event data type and instances for proper type classes (e.g. FromJson)
 -- should be implemented here.
@@ -25,31 +26,31 @@ instance FromJSON Body where
 
 data Event = MessageEvent { source :: EventSource
                           , datetime :: UTCTime
-                          , replyToken :: Text
+                          , replyToken :: ReplyToken
                           , message :: MessageData
                           }
            | FollowEvent { source :: EventSource
                          , datetime :: UTCTime
-                         , replyToken :: Text
+                         , replyToken :: ReplyToken
                          }
            | UnfollowEvent { source :: EventSource
                            , datetime :: UTCTime
                            }
            | JoinEvent { source :: EventSource
                        , datetime :: UTCTime
-                       , replyToken :: Text
+                       , replyToken :: ReplyToken
                        }
            | LeaveEvent { source :: EventSource
                         , datetime :: UTCTime
                         }
            | PostbackEvent { source :: EventSource
                            , datetime :: UTCTime
-                           , replyToken :: Text
+                           , replyToken :: ReplyToken
                            , postback :: Text
                            }
            | BeaconEvent { source :: EventSource
                          , datetime :: UTCTime
-                         , replyToken :: Text
+                         , replyToken :: ReplyToken
                          , beacon :: BeaconData
                          }
            deriving Show
