@@ -25,6 +25,7 @@ handleEvent (MessageEvent source _ replyToken (TextMessage _ text))
   | "園田さん、" `T.isPrefixOf` text = do
       c <- getChannelAccessToken
       let x = T.drop 5 text
+      print source
       reply c replyToken text
   | otherwise = return ()
 handleEvent _ = return ()
