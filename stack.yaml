@@ -1,6 +1,10 @@
 resolver: nightly-2016-10-29
 packages:
 - '.'
-extra-deps: []
+extra-deps:
+- 'wreq-0.4.1.0'
+- 'authenticate-oauth-1.5.1.2'
+- 'http-client-0.4.31.1'
+- 'http-client-tls-0.2.4.1'
 flags: {}
 extra-package-dbs: []
