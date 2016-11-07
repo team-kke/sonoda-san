@@ -2,6 +2,7 @@ module Line.Webhook.Event (
   Body (..),
   Event (..),
   EventSource (..),
+  BeaconData (..),
   ) where
 
 import Data.Aeson
