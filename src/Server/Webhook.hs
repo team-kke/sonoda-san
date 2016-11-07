@@ -4,7 +4,8 @@ module Server.Webhook (
 
 import Config (getChannelSecret, getChannelAccessToken)
 import Control.Monad (forM_)
-import Line.Messaging.API (reply)
+import Control.Monad.Trans.Reader (runReaderT)
+import Line.Messaging.API (runAPI, reply)
 import Line.Messaging.Webhook
 import Network.Wai
 import qualified Data.Text as T
@@ -23,9 +24,9 @@ handler events = do
 handleEvent :: Event -> IO ()
 handleEvent (MessageEvent source _ replyToken (TextMessage _ text))
   | "園田さん、" `T.isPrefixOf` text = do
-      c <- getChannelAccessToken
-      let x = T.drop 5 text
+      let echo = T.drop 5 text
       print source
-      reply c replyToken text
+      runAPI getChannelAccessToken $ do
+        reply replyToken echo
   | otherwise = return ()
 handleEvent _ = return ()
