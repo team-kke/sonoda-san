@@ -2,6 +2,7 @@ module Line.Webhook.Event (
   Body (..),
   Event (..),
   EventSource (..),
+  MessageData (..),
   BeaconData (..),
   ) where
 
@@ -25,7 +26,7 @@ instance FromJSON Body where
 data Event = MessageEvent { source :: EventSource
                           , datetime :: UTCTime
                           , replyToken :: Text
-                          -- FIXME: message data
+                          , message :: MessageData
                           }
            | FollowEvent { source :: EventSource
                          , datetime :: UTCTime
@@ -65,6 +66,7 @@ instance FromJSON Event where
   parseJSON (Object v) = v .: "type" >>= \ t ->
     case t :: Text of
       "message" -> parseCommon MessageEvent v `withReplyToken` v
+                   <*> v .: "message"
       "follow" -> parseCommon FollowEvent v `withReplyToken` v
       "unfollow" -> parseCommon UnfollowEvent v
       "join" -> parseCommon JoinEvent v `withReplyToken` v
@@ -88,6 +90,45 @@ instance FromJSON EventSource where
       "group" -> Group <$> v .: "groupId"
       "room" -> Room <$> v .: "roomId"
       _ -> return InvalidEventSource
+
+data MessageData = TextMessage { id :: Text
+                               , text :: Text
+                               }
+                 | ImageMessage { id :: Text }
+                 | VideoMessage { id :: Text }
+                 | AudioMessage { id :: Text }
+                 | LocationMessage { id :: Text
+                                   , title :: Text
+                                   , address :: Text
+                                   , latitude :: Double
+                                   , longitude :: Double
+                                   }
+                 | StickerMessage { id :: Text
+                                  , packageId :: Text
+                                  , stickerId :: Text
+                                  }
+                 | InvalidMessageData
+                 deriving Show
+
+parseId :: (Text -> a) -> Object -> Parser a
+parseId f v = f <$> (v .: "id")
+
+instance FromJSON MessageData where
+  parseJSON (Object v) = v .: "type" >>= \ t ->
+    case t :: Text of
+      "text" -> parseId TextMessage v <*> v .: "text"
+      "image" -> parseId ImageMessage v
+      "video" -> parseId VideoMessage v
+      "audio" -> parseId AudioMessage v
+      "location" -> parseId LocationMessage v
+                    <*> v .: "title"
+                    <*> v .: "address"
+                    <*> v .: "latitude"
+                    <*> v .: "longitude"
+      "sticker" -> parseId StickerMessage v
+                          <*> v .: "packageId"
+                          <*> v .: "stickerId"
+      _ -> return InvalidMessageData
 
 data BeaconData = BeaconEnter { hwid :: Text }
                 | InvalidBeaconData
