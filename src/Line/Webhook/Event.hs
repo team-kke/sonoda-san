@@ -23,21 +23,61 @@ instance FromJSON Body where
 
 data Event = MessageEvent { source :: EventSource
                           , datetime :: UTCTime
+                          , replyToken :: Text
+                          -- FIXME: message data
                           }
-             deriving Show
+           | FollowEvent { source :: EventSource
+                         , datetime :: UTCTime
+                         , replyToken :: Text
+                         }
+           | UnfollowEvent { source :: EventSource
+                           , datetime :: UTCTime
+                           }
+           | JoinEvent { source :: EventSource
+                       , datetime :: UTCTime
+                       , replyToken :: Text
+                       }
+           | LeaveEvent { source :: EventSource
+                        , datetime :: UTCTime
+                        }
+           | PostbackEvent { source :: EventSource
+                           , datetime :: UTCTime
+                           , replyToken :: Text
+                           , postback :: Text
+                           }
+           | BeaconEvent { source :: EventSource
+                         , datetime :: UTCTime
+                         , replyToken :: Text
+                         , beacon :: BeaconData
+                         }
+           | InvalidEvent
+           deriving Show
 
 parseCommon :: (EventSource -> UTCTime -> a) -> Object -> Parser a
 parseCommon f v = f <$> (v .: "source")
                     <*> (posixSecondsToUTCTime . (/ 1000) . fromInteger <$> v .: "timestamp")
 
+withReplyToken :: Parser (Text -> a) -> Object -> Parser a
+withReplyToken p v = p <*> v .: "replyToken"
+
 instance FromJSON Event where
   parseJSON (Object v) = v .: "type" >>= \ t ->
     case t :: Text of
-      _ -> parseCommon MessageEvent v
+      "message" -> parseCommon MessageEvent v `withReplyToken` v
+      "follow" -> parseCommon FollowEvent v `withReplyToken` v
+      "unfollow" -> parseCommon UnfollowEvent v
+      "join" -> parseCommon JoinEvent v `withReplyToken` v
+      "leave" -> parseCommon LeaveEvent v
+      "postback" -> parseCommon PostbackEvent v `withReplyToken` v
+                    <*> ((v .: "postback") >>= (.: "data"))
+      "beacon" -> parseCommon BeaconEvent v `withReplyToken` v
+                  <*> v .: "beacon"
+      _ -> return InvalidEvent
 
 data EventSource = User { userId :: Text }
                  | Group { groupId :: Text }
                  | Room { roomId :: Text }
+                 | InvalidEventSource
                  deriving Show
 
 instance FromJSON EventSource where
@@ -46,3 +86,14 @@ instance FromJSON EventSource where
       "user" -> User <$> v .: "userId"
       "group" -> Group <$> v .: "groupId"
       "room" -> Room <$> v .: "roomId"
+      _ -> return InvalidEventSource
+
+data BeaconData = BeaconEnter { hwid :: Text }
+                | InvalidBeaconData
+                deriving Show
+
+instance FromJSON BeaconData where
+  parseJSON (Object v) = v .: "type" >>= \ t ->
+    case t :: Text of
+      "enter" -> BeaconEnter <$> v .: "hwid"
+      _ -> return InvalidBeaconData
