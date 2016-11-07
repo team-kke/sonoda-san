@@ -52,7 +52,6 @@ data Event = MessageEvent { source :: EventSource
                          , replyToken :: Text
                          , beacon :: BeaconData
                          }
-           | InvalidEvent
            deriving Show
 
 parseCommon :: (EventSource -> UTCTime -> a) -> Object -> Parser a
@@ -75,12 +74,11 @@ instance FromJSON Event where
                     <*> ((v .: "postback") >>= (.: "data"))
       "beacon" -> parseCommon BeaconEvent v `withReplyToken` v
                   <*> v .: "beacon"
-      _ -> return InvalidEvent
+      _ -> fail "Event"
 
 data EventSource = User { userId :: Text }
                  | Group { groupId :: Text }
                  | Room { roomId :: Text }
-                 | InvalidEventSource
                  deriving Show
 
 instance FromJSON EventSource where
@@ -89,7 +87,7 @@ instance FromJSON EventSource where
       "user" -> User <$> v .: "userId"
       "group" -> Group <$> v .: "groupId"
       "room" -> Room <$> v .: "roomId"
-      _ -> return InvalidEventSource
+      _ -> fail "EventSource"
 
 data MessageData = TextMessage { id :: Text
                                , text :: Text
@@ -107,7 +105,6 @@ data MessageData = TextMessage { id :: Text
                                   , packageId :: Text
                                   , stickerId :: Text
                                   }
-                 | InvalidMessageData
                  deriving Show
 
 parseId :: (Text -> a) -> Object -> Parser a
@@ -128,14 +125,13 @@ instance FromJSON MessageData where
       "sticker" -> parseId StickerMessage v
                           <*> v .: "packageId"
                           <*> v .: "stickerId"
-      _ -> return InvalidMessageData
+      _ -> fail "MessageData"
 
 data BeaconData = BeaconEnter { hwid :: Text }
-                | InvalidBeaconData
                 deriving Show
 
 instance FromJSON BeaconData where
   parseJSON (Object v) = v .: "type" >>= \ t ->
     case t :: Text of
       "enter" -> BeaconEnter <$> v .: "hwid"
-      _ -> return InvalidBeaconData
+      _ -> fail "BeaconData"
