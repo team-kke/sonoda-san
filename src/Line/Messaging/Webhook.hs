@@ -1,6 +1,6 @@
-module Line.Webhook (
-  module Line.Webhook.Event,
-  module Line.Webhook.Types,
+module Line.Messaging.Webhook (
+  module Line.Messaging.Webhook.Event,
+  module Line.Messaging.Webhook.Types,
   webhook,
   webhookApp,
   defaultOnFailure,
@@ -10,9 +10,10 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Except (ExceptT, throwE, runExceptT)
 import Data.Aeson (decode')
 import Data.ByteString.Builder (string8)
-import Line.Webhook.Event
-import Line.Webhook.Types
-import Line.Webhook.Validation (validateSignature)
+import Line.Messaging.Webhook.Event
+import Line.Messaging.Webhook.Types
+import Line.Messaging.Webhook.Validation (validateSignature)
+import Line.Types (ChannelSecret)
 import Network.HTTP.Types.Status
 import Network.Wai
 

@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Line.Webhook.Validation (
+module Line.Messaging.Webhook.Validation (
   validateSignature,
   ) where
 
 import Crypto.Hash.SHA256 (hmaclazy)
 import Data.ByteString (ByteString)
 import Data.Text.Encoding (encodeUtf8)
-import Line.Webhook.Types
+import Line.Types
 import Network.HTTP.Types.Header
 import Network.Wai
 import qualified Data.ByteString.Base64 as Base64

@@ -4,7 +4,7 @@ module Server.Webhook (
 
 import Config (getChannelSecret)
 import Control.Monad (forM_)
-import Line.Webhook (webhookApp, Event, WebhookResult(..), defaultOnFailure)
+import Line.Messaging.Webhook (webhookApp, Event, WebhookResult(..), defaultOnFailure)
 import Network.Wai
 
 app :: Application

@@ -17,10 +17,10 @@ library
   hs-source-dirs:      src
   exposed-modules:     Cmd
                        Config
-                       Line.Webhook
-                       Line.Webhook.Event
-                       Line.Webhook.Types
-                       Line.Webhook.Validation
+                       Line.Messaging.Webhook
+                       Line.Messaging.Webhook.Event
+                       Line.Messaging.Webhook.Types
+                       Line.Messaging.Webhook.Validation
                        Response
                        Server
                        Server.Webhook

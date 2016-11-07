@@ -1,4 +1,4 @@
-module Line.Webhook.Event (
+module Line.Messaging.Webhook.Event (
   Body (..),
   Event (..),
   EventSource (..),
