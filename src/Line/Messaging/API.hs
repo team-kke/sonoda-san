@@ -1,4 +1,5 @@
 module Line.Messaging.API (
+  APIIO,
   runAPI,
   reply,
   ) where
