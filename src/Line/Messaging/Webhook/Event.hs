@@ -124,8 +124,8 @@ instance FromJSON MessageData where
                     <*> v .: "latitude"
                     <*> v .: "longitude"
       "sticker" -> parseId StickerMessage v
-                          <*> v .: "packageId"
-                          <*> v .: "stickerId"
+                   <*> v .: "packageId"
+                   <*> v .: "stickerId"
       _ -> fail "MessageData"
 
 data BeaconData = BeaconEnter { hwid :: Text }
