@@ -20,14 +20,16 @@ handler events = do
   forM_ events handleEvent
   return Ok
 
+api :: APIIO a -> IO a
+api = runAPI getChannelAccessToken
+
 handleEvent :: Event -> IO ()
 handleEvent (MessageEvent source _ replyToken message) = case message of
   TextMessage (IDed _ (Text text)) -> do
     if "園田さん、" `T.isPrefixOf` text
       then do
         print source
-        runAPI getChannelAccessToken $ do
-          reply replyToken [Text $ T.drop 5 text]
+        api $ reply replyToken [Text $ T.drop 5 text]
       else return ()
   _ -> return ()
 handleEvent _ = return ()
