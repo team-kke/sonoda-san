@@ -33,5 +33,7 @@ handleEvent (MessageEvent source _ replyToken message) = case message of
   LocationIM (IDed _ location) -> do
     print location
     api $ reply replyToken [LocationOM location, TextOM $ Text "どこですか？"]
+  StickerIM (IDed _ sticker) -> do
+    api $ reply replyToken [StickerOM sticker]
   _ -> return ()
 handleEvent _ = return ()
