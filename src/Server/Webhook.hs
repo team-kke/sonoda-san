@@ -23,17 +23,17 @@ api :: APIIO a -> IO a
 api = runAPI getChannelAccessToken
 
 handleEvent :: Event -> IO ()
-handleEvent (MessageEvent source _ replyToken message) = case message of
+handleEvent (MessageEvent event) = case message event of
   TextIM (IDed _ (Text text)) -> do
     if "園田さん、" `T.isPrefixOf` text
       then do
-        print source
-        api $ reply replyToken [TextOM $ Text $ T.drop 5 text]
+        print $ source event
+        api $ reply (replyToken event) [TextOM $ Text $ T.drop 5 text]
       else return ()
   LocationIM (IDed _ location) -> do
     print location
-    api $ reply replyToken [LocationOM location, TextOM $ Text "どこですか？"]
+    api $ reply (replyToken event) [LocationOM location, TextOM $ Text "どこですか？"]
   StickerIM (IDed _ sticker) -> do
-    api $ reply replyToken [StickerOM sticker]
+    api $ reply (replyToken event) [StickerOM sticker]
   _ -> return ()
 handleEvent _ = return ()

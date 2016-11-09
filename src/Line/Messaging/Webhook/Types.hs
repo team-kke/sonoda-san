@@ -4,6 +4,14 @@ module Line.Messaging.Webhook.Types (
   WebhookFailure (..),
   ReplyToken,
   Body (..),
+  ReplyableMessage,
+  NonReplyableMessage,
+  source,
+  datetime,
+  replyToken,
+  message,
+  postback,
+  beacon,
   Event (..),
   EventSource (..),
   IDed (..),
@@ -42,13 +50,40 @@ instance FromJSON Body where
   parseJSON (Object v) = Body <$> v .: "events"
   parseJSON _ = fail "Body"
 
-data Event = MessageEvent EventSource UTCTime ReplyToken IncomingMessage
-           | FollowEvent EventSource UTCTime ReplyToken
-           | UnfollowEvent EventSource UTCTime
-           | JoinEvent EventSource UTCTime ReplyToken
-           | LeaveEvent EventSource UTCTime
-           | PostbackEvent EventSource UTCTime ReplyToken T.Text
-           | BeaconEvent EventSource UTCTime ReplyToken BeaconData
+data ReplyableMessage a = ReplyableMessage EventSource UTCTime ReplyToken a deriving Show
+data NonReplyableMessage a = NonReplyableMessage EventSource UTCTime a deriving Show
+
+class EventMessage m where
+  source :: m -> EventSource
+  datetime :: m -> UTCTime
+
+instance EventMessage (ReplyableMessage a) where
+  source (ReplyableMessage x _ _ _) = x
+  datetime (ReplyableMessage _ x _ _) = x
+
+instance EventMessage (NonReplyableMessage a) where
+  source (NonReplyableMessage x _ _) = x
+  datetime (NonReplyableMessage _ x _) = x
+
+replyToken :: ReplyableMessage a -> ReplyToken
+replyToken (ReplyableMessage _ _ x _) = x
+
+message :: ReplyableMessage IncomingMessage -> IncomingMessage
+message (ReplyableMessage _ _ _ x) = x
+
+postback :: ReplyableMessage T.Text -> T.Text
+postback (ReplyableMessage _ _ _ x) = x
+
+beacon :: ReplyableMessage BeaconData -> BeaconData
+beacon (ReplyableMessage _ _ _ x) = x
+
+data Event = MessageEvent (ReplyableMessage IncomingMessage)
+           | FollowEvent (ReplyableMessage ())
+           | UnfollowEvent (NonReplyableMessage ())
+           | JoinEvent (ReplyableMessage ())
+           | LeaveEvent (NonReplyableMessage ())
+           | PostbackEvent (ReplyableMessage T.Text)
+           | BeaconEvent (ReplyableMessage BeaconData)
            deriving Show
 
 parseCommon :: (EventSource -> UTCTime -> a) -> Object -> Parser a
@@ -61,16 +96,20 @@ withReplyToken p v = p <*> v .: "replyToken"
 instance FromJSON Event where
   parseJSON (Object v) = v .: "type" >>= \ t ->
     case t :: T.Text of
-      "message" -> parseCommon MessageEvent v `withReplyToken` v
-                   <*> v .: "message"
-      "follow" -> parseCommon FollowEvent v `withReplyToken` v
-      "unfollow" -> parseCommon UnfollowEvent v
-      "join" -> parseCommon JoinEvent v `withReplyToken` v
-      "leave" -> parseCommon LeaveEvent v
-      "postback" -> parseCommon PostbackEvent v `withReplyToken` v
-                    <*> ((v .: "postback") >>= (.: "data"))
-      "beacon" -> parseCommon BeaconEvent v `withReplyToken` v
-                  <*> v .: "beacon"
+      "message" -> MessageEvent <$> (parseCommon ReplyableMessage v `withReplyToken` v
+                                      <*> v .: "message")
+      "follow" -> FollowEvent <$> (parseCommon ReplyableMessage v `withReplyToken` v
+                                    <*> return ())
+      "unfollow" -> UnfollowEvent <$> (parseCommon NonReplyableMessage v
+                                        <*> return ())
+      "join" -> JoinEvent <$> (parseCommon ReplyableMessage v `withReplyToken` v
+                                <*> return ())
+      "leave" -> LeaveEvent <$> (parseCommon NonReplyableMessage v
+                                  <*> return ())
+      "postback" -> PostbackEvent <$> (parseCommon ReplyableMessage v `withReplyToken` v
+                                        <*> ((v .: "postback") >>= (.: "data")))
+      "beacon" -> BeaconEvent <$> (parseCommon ReplyableMessage v `withReplyToken` v
+                                    <*> v .: "beacon")
       _ -> fail "Event"
   parseJSON _ = fail "Event"
 
