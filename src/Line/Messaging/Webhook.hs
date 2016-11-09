@@ -13,7 +13,7 @@ import Data.ByteString.Builder (string8)
 import Line.Messaging.Webhook.Event
 import Line.Messaging.Webhook.Types
 import Line.Messaging.Webhook.Validation (validateSignature)
-import Line.Types (ChannelSecret)
+import Line.Messaging.Types (ChannelSecret)
 import Network.HTTP.Types.Status
 import Network.Wai
 

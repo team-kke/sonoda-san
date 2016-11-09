@@ -9,7 +9,7 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (runReaderT, ReaderT, ask)
 import Data.Aeson (ToJSON, toJSON, object, (.=))
 import Data.Text.Encoding (encodeUtf8)
-import Line.Types
+import Line.Messaging.Types
 import Network.Wreq
 import Network.Wreq.Types (Postable)
 import qualified Data.Text as T

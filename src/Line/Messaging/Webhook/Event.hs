@@ -12,7 +12,7 @@ import Data.Aeson.Types (Parser)
 import Data.Text (Text)
 import Data.Time.Clock (UTCTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
-import Line.Types (ReplyToken, ID)
+import Line.Messaging.Types (ReplyToken, ID)
 
 -- The Event data type and instances for proper type classes (e.g. FromJson)
 -- should be implemented here.

@@ -10,7 +10,7 @@ import Cmd (getConfigPath)
 import Data.Text (Text)
 import Data.Yaml (FromJSON, decodeFile)
 import GHC.Generics
-import Line.Types (ChannelSecret, ChannelAccessToken)
+import Line.Messaging.Types (ChannelSecret, ChannelAccessToken)
 import System.Exit (exitFailure)
 
 type Port = Int -- in Network.Wai.Handler.Warp

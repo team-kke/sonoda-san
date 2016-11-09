@@ -18,6 +18,7 @@ library
   exposed-modules:     Cmd
                        Config
                        Line.Messaging.API
+                       Line.Messaging.Types
                        Line.Messaging.Webhook
                        Line.Messaging.Webhook.Event
                        Line.Messaging.Webhook.Types

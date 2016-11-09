@@ -1,4 +1,4 @@
-module Line.Types (
+module Line.Messaging.Types (
   module Line.Messaging.Webhook.Types,
   ChannelSecret,
   ChannelAccessToken,
