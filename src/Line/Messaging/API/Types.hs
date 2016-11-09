@@ -61,7 +61,7 @@ instance Messageable Location where
   toObject location = [ "title" .= title location
                       , "address" .= address location
                       , "latitude" .= latitude location
-                      , "logiture" .= longitude location
+                      , "longitude" .= longitude location
                       ]
 
 data Sticker = Sticker { package :: ID
