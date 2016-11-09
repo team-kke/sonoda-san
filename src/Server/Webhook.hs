@@ -6,7 +6,7 @@ import Config (getChannelSecret, getChannelAccessToken)
 import Control.Monad (forM_)
 import Control.Monad.Trans.Reader (runReaderT)
 import Line.Messaging.API (runAPI, reply)
-import Line.Messaging.API.Types (Text(..))
+import Line.Messaging.API.Types (Text (..))
 import Line.Messaging.Webhook
 import Network.Wai
 import qualified Data.Text as T
@@ -27,9 +27,8 @@ handleEvent (MessageEvent source _ replyToken message) = case message of
   TextMessage (IDed _ (Text text)) -> do
     if "園田さん、" `T.isPrefixOf` text
       then do
-        let echo = T.drop 5 text
         print source
         runAPI getChannelAccessToken $ do
-          reply replyToken echo
+          reply replyToken [Text $ T.drop 5 text]
       else return ()
 handleEvent _ = return ()

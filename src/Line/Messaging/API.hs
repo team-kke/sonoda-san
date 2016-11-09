@@ -7,11 +7,10 @@ module Line.Messaging.API (
 import Control.Lens ((&), (.~))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (runReaderT, ReaderT, ask)
-import Data.Aeson (ToJSON, toJSON, object, (.=))
+import Data.Aeson (ToJSON(..), (.=), object)
 import Data.Text.Encoding (encodeUtf8)
-import Line.Messaging.Types (ChannelAccessToken, ReplyToken)
+import Line.Messaging.Types (ChannelAccessToken, ReplyToken, Messageable(..))
 import Network.Wreq
-import Network.Wreq.Types (Postable)
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 
@@ -32,16 +31,7 @@ request apiPath body = do
     postWith opts (url apiPath) (toJSON body)
     return ()
 
--- FIXME: separate into Types module
-data Message = Text T.Text
-
-instance ToJSON Message where
-  toJSON (Text t) = object [ "type" .= ("text" :: T.Text)
-                           , "text" .= t
-                           ]
-
--- FIXME: send message objects instead of text
-reply :: ReplyToken -> T.Text -> APIIO ()
-reply replyToken text = request "reply" $ object [ "replyToken" .= replyToken
-                                                 , "messages" .= [ Text text ]
-                                                 ]
+reply :: Messageable a =>  ReplyToken -> [a] -> APIIO ()
+reply replyToken ms = request "reply" $ object [ "replyToken" .= replyToken
+                                               , "messages" .= map toMessage ms
+                                               ]
