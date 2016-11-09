@@ -1,5 +1,4 @@
 module Line.Messaging.Webhook (
-  module Line.Messaging.Webhook.Event,
   module Line.Messaging.Webhook.Types,
   webhook,
   webhookApp,
@@ -10,7 +9,6 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Except (ExceptT, throwE, runExceptT)
 import Data.Aeson (decode')
 import Data.ByteString.Builder (string8)
-import Line.Messaging.Webhook.Event
 import Line.Messaging.Webhook.Types
 import Line.Messaging.Webhook.Validation (validateSignature)
 import Line.Messaging.Types (ChannelSecret)
