@@ -1,21 +1,24 @@
 module Line.Messaging.Webhook.Types (
+  module Line.Messaging.Common.Types,
   WebhookResult (..),
   WebhookFailure (..),
   ReplyToken,
-  ID,
   Body (..),
   Event (..),
   EventSource (..),
-  Message (..),
+  IDed (..),
+  IncomingMessage (..),
   BeaconData (..),
   ) where
 
 import Data.Aeson
 import Data.Aeson.Types (Parser)
-import Data.Text (Text)
 import Data.Time.Clock (UTCTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
-import Network.Wai
+import Line.Messaging.API.Types
+import Line.Messaging.Common.Types
+import Network.Wai (Response, Application)
+import qualified Data.Text as T
 
 data WebhookResult = Ok
                    | WaiResponse Response
@@ -25,8 +28,7 @@ data WebhookFailure = SignatureVerificationFailed
                     | MessageDecodeFailed
                     deriving Show
 
-type ReplyToken = Text
-type ID = Text
+type ReplyToken = T.Text
 
 -- The Event data type and instances for proper type classes (e.g. FromJson)
 -- should be implemented here.
@@ -39,12 +41,12 @@ newtype Body = Body { events :: [Event] }
 instance FromJSON Body where
   parseJSON (Object v) = Body <$> v .: "events"
 
-data Event = MessageEvent EventSource UTCTime ReplyToken Message
+data Event = MessageEvent EventSource UTCTime ReplyToken IncomingMessage
            | FollowEvent EventSource UTCTime ReplyToken
            | UnfollowEvent EventSource UTCTime
            | JoinEvent EventSource UTCTime ReplyToken
            | LeaveEvent EventSource UTCTime
-           | PostbackEvent EventSource UTCTime ReplyToken Text
+           | PostbackEvent EventSource UTCTime ReplyToken T.Text
            | BeaconEvent EventSource UTCTime ReplyToken BeaconData
            deriving Show
 
@@ -52,12 +54,12 @@ parseCommon :: (EventSource -> UTCTime -> a) -> Object -> Parser a
 parseCommon f v = f <$> (v .: "source")
                     <*> (posixSecondsToUTCTime . (/ 1000) . fromInteger <$> v .: "timestamp")
 
-withReplyToken :: Parser (Text -> a) -> Object -> Parser a
+withReplyToken :: Parser (T.Text -> a) -> Object -> Parser a
 withReplyToken p v = p <*> v .: "replyToken"
 
 instance FromJSON Event where
   parseJSON (Object v) = v .: "type" >>= \ t ->
-    case t :: Text of
+    case t :: T.Text of
       "message" -> parseCommon MessageEvent v `withReplyToken` v
                    <*> v .: "message"
       "follow" -> parseCommon FollowEvent v `withReplyToken` v
@@ -77,62 +79,42 @@ data EventSource = User ID
 
 instance FromJSON EventSource where
   parseJSON (Object v) = v .: "type" >>= \ t ->
-    case t :: Text of
-      "user" -> User <$> v .: "userId"
-      "group" -> Group <$> v .: "groupId"
-      "room" -> Room <$> v .: "roomId"
+    case t :: T.Text of
+      "user" -> User . ID <$> v .: "userId"
+      "group" -> Group . ID <$> v .: "groupId"
+      "room" -> Room . ID <$> v .: "roomId"
       _ -> fail "EventSource"
 
+data IDed a = IDed ID a
+            deriving Show
 
-data Location = Location { title :: Text
-                         , address :: Text
-                         , latitude :: Double
-                         , longitude :: Double
-                         }
-                deriving Show
+instance FromJSON a => FromJSON (IDed a) where
+  parseJSON v = IDed <$> parseJSON v <*> parseJSON v
 
-data Sticker = Sticker { package :: ID
-                       , sticker :: ID
-                       }
-               deriving Show
+data IncomingMessage = TextMessage (IDed Text)
+                     | ImageMessage ID
+                     | VideoMessage ID
+                     | AudioMessage ID
+                     | LocationMessage (IDed Location)
+                     | StickerMessage (IDed Sticker)
+                     deriving Show
 
-data Message = TextMessage ID Text
-             | ImageMessage ID
-             | VideoMessage ID
-             | AudioMessage ID
-             | LocationMessage ID Location
-             | StickerMessage ID Sticker
-             deriving Show
-
-parseId :: (Text -> a) -> Object -> Parser a
-parseId f v = f <$> (v .: "id")
-
-withLocation :: Parser (Location -> a) -> Object -> Parser a
-withLocation p v = p <*> (Location <$> v .: "title"
-                                   <*> v .: "address"
-                                   <*> v .: "latitude"
-                                   <*> v .: "longitude")
-
-withSticker :: Parser (Sticker -> a) -> Object -> Parser a
-withSticker p v = p <*> (Sticker <$> v .: "packageId"
-                                 <*> v .: "stickerId")
-
-instance FromJSON Message where
+instance FromJSON IncomingMessage where
   parseJSON (Object v) = v .: "type" >>= \ t ->
-    case t :: Text of
-      "text" -> parseId TextMessage v <*> v .: "text"
-      "image" -> parseId ImageMessage v
-      "video" -> parseId VideoMessage v
-      "audio" -> parseId AudioMessage v
-      "location" -> parseId LocationMessage v `withLocation` v
-      "sticker" -> parseId StickerMessage v `withSticker` v
-      _ -> fail "Message"
+    case t :: T.Text of
+      "text" -> TextMessage <$> parseJSON (Object v)
+      "image" -> ImageMessage <$> parseJSON (Object v)
+      "video" -> VideoMessage <$> parseJSON (Object v)
+      "audio" -> AudioMessage <$> parseJSON (Object v)
+      "location" -> LocationMessage <$> parseJSON (Object v)
+      "sticker" -> StickerMessage <$> parseJSON (Object v)
+      _ -> fail "IncomingMessage"
 
-data BeaconData = BeaconEnter { hwid :: Text }
+data BeaconData = BeaconEnter { hwid :: ID }
                 deriving Show
 
 instance FromJSON BeaconData where
   parseJSON (Object v) = v .: "type" >>= \ t ->
-    case t :: Text of
-      "enter" -> BeaconEnter <$> v .: "hwid"
+    case t :: T.Text of
+      "enter" -> BeaconEnter . ID <$> v .: "hwid"
       _ -> fail "BeaconData"
