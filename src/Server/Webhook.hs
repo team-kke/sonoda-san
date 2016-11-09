@@ -4,8 +4,7 @@ module Server.Webhook (
 
 import Config (getChannelSecret, getChannelAccessToken)
 import Control.Monad (forM_)
-import Line.Messaging.API (runAPI, APIIO, reply)
-import Line.Messaging.API.Types (Text (..))
+import Line.Messaging.API (runAPI, APIIO, reply, OutgoingMessage(..), Text(..))
 import Line.Messaging.Webhook
 import Network.Wai
 import qualified Data.Text as T
@@ -25,11 +24,14 @@ api = runAPI getChannelAccessToken
 
 handleEvent :: Event -> IO ()
 handleEvent (MessageEvent source _ replyToken message) = case message of
-  TextMessage (IDed _ (Text text)) -> do
+  TextIM (IDed _ (Text text)) -> do
     if "園田さん、" `T.isPrefixOf` text
       then do
         print source
-        api $ reply replyToken [Text $ T.drop 5 text]
+        api $ reply replyToken [TextOM $ Text $ T.drop 5 text]
       else return ()
+  LocationIM (IDed _ location) -> do
+    print location
+    api $ reply replyToken [LocationOM location, TextOM $ Text "どこですか？"]
   _ -> return ()
 handleEvent _ = return ()

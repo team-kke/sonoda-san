@@ -1,4 +1,5 @@
 module Line.Messaging.API (
+  module Line.Messaging.API.Types,
   APIIO,
   runAPI,
   reply,
@@ -9,7 +10,8 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (runReaderT, ReaderT, ask)
 import Data.Aeson (ToJSON(..), (.=), object)
 import Data.Text.Encoding (encodeUtf8)
-import Line.Messaging.Types (ChannelAccessToken, ReplyToken, Messageable(..))
+import Line.Messaging.API.Types
+import Line.Messaging.Types (ChannelAccessToken, ReplyToken)
 import Network.Wreq
 import qualified Data.ByteString as B
 
@@ -28,7 +30,7 @@ request apiPath body = do
   let opts = defaults & header "Authorization" .~ ["Bearer " `B.append` token]
   liftIO $ postWith opts (url apiPath) (toJSON body) >> return ()
 
-reply :: Messageable a =>  ReplyToken -> [a] -> APIIO ()
+reply ::  ReplyToken -> [OutgoingMessage] -> APIIO ()
 reply replyToken ms = request "reply" $ object [ "replyToken" .= replyToken
-                                               , "messages" .= map toMessage ms
+                                               , "messages" .= map toJSON ms
                                                ]

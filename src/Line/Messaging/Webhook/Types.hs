@@ -94,23 +94,23 @@ data IDed a = IDed ID a
 instance FromJSON a => FromJSON (IDed a) where
   parseJSON v = IDed <$> parseJSON v <*> parseJSON v
 
-data IncomingMessage = TextMessage (IDed Text)
-                     | ImageMessage ID
-                     | VideoMessage ID
-                     | AudioMessage ID
-                     | LocationMessage (IDed Location)
-                     | StickerMessage (IDed Sticker)
+data IncomingMessage = TextIM (IDed Text)
+                     | ImageIM ID
+                     | VideoIM ID
+                     | AudioIM ID
+                     | LocationIM (IDed Location)
+                     | StickerIM (IDed Sticker)
                      deriving Show
 
 instance FromJSON IncomingMessage where
   parseJSON (Object v) = v .: "type" >>= \ t ->
     case t :: T.Text of
-      "text" -> TextMessage <$> parseJSON (Object v)
-      "image" -> ImageMessage <$> parseJSON (Object v)
-      "video" -> VideoMessage <$> parseJSON (Object v)
-      "audio" -> AudioMessage <$> parseJSON (Object v)
-      "location" -> LocationMessage <$> parseJSON (Object v)
-      "sticker" -> StickerMessage <$> parseJSON (Object v)
+      "text" -> TextIM <$> parseJSON (Object v)
+      "image" -> ImageIM <$> parseJSON (Object v)
+      "video" -> VideoIM <$> parseJSON (Object v)
+      "audio" -> AudioIM <$> parseJSON (Object v)
+      "location" -> LocationIM <$> parseJSON (Object v)
+      "sticker" -> StickerIM <$> parseJSON (Object v)
       _ -> fail "IncomingMessage"
   parseJSON _ = fail "IncommingMessage"
 

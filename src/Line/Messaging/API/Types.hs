@@ -3,23 +3,30 @@ module Line.Messaging.API.Types (
   Location (..),
   Sticker (..),
   Text (..),
-  OutgoingMessage,
-  Messageable (toMessage)
+  OutgoingMessage (..),
+  Messageable,
   ) where
 
-import Data.Aeson (FromJSON(..), Value(..), object, (.:), (.=))
+import Data.Aeson (FromJSON(..), ToJSON(..), Value(..), object, (.:), (.=))
 import Data.Aeson.Types (Pair)
 import Line.Messaging.Common.Types (ID(..))
 import qualified Data.Text as T
-
-type OutgoingMessage = Value
 
 class Messageable a where
   toType :: a -> T.Text
   toObject :: a -> [Pair]
 
-  toMessage :: a -> OutgoingMessage
-  toMessage a = object $ ("type" .= toType a) : toObject a
+  toValue :: a -> Value
+  toValue a = object $ ("type" .= toType a) : toObject a
+
+data OutgoingMessage = TextOM Text
+                     | LocationOM Location
+                     | StickerOM Sticker
+
+instance ToJSON OutgoingMessage where
+  toJSON (TextOM t) = toValue t
+  toJSON (LocationOM l) = toValue l
+  toJSON (StickerOM s) = toValue s
 
 newtype Text = Text T.Text
              deriving Show
