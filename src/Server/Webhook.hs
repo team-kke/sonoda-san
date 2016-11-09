@@ -4,13 +4,11 @@ module Server.Webhook (
 
 import Config (getChannelSecret, getChannelAccessToken)
 import Control.Monad (forM_)
-import Control.Monad.Trans.Reader (runReaderT)
-import Line.Messaging.API (runAPI, reply)
+import Line.Messaging.API (runAPI, APIIO, reply)
 import Line.Messaging.API.Types (Text (..))
 import Line.Messaging.Webhook
 import Network.Wai
 import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 
 app :: Application
 app req f = do
@@ -31,4 +29,5 @@ handleEvent (MessageEvent source _ replyToken message) = case message of
         runAPI getChannelAccessToken $ do
           reply replyToken [Text $ T.drop 5 text]
       else return ()
+  _ -> return ()
 handleEvent _ = return ()

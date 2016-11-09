@@ -37,11 +37,11 @@ webhookApp :: ChannelSecret
            -> ([Event] -> IO WebhookResult)
            -> (WebhookFailure -> Application)
            -> Application
-webhookApp secret handler fail req f = do
+webhookApp secret handler failHandler req f = do
   result <- runExceptT $ webhook secret req
   case result of
     Right events -> handler events >>= waiResponse <*> pure req <*> pure f
-    Left exception -> fail exception req f
+    Left exception -> failHandler exception req f
 
 defaultOnFailure :: WebhookFailure -> Application
 defaultOnFailure failure _ f = f .

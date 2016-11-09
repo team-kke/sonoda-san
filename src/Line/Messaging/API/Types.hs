@@ -26,6 +26,8 @@ newtype Text = Text T.Text
 
 instance FromJSON Text where
   parseJSON (Object v) = Text <$> v .: "text"
+  parseJSON (String text) = return $ Text text
+  parseJSON _ = fail "Text"
 
 instance Messageable Text where
   toType _ = "text"
@@ -45,6 +47,7 @@ instance FromJSON Location where
                                   <*> v .: "address"
                                   <*> v .: "latitude"
                                   <*> v .: "longitude"
+  parseJSON _ = fail "Location"
 
 instance Messageable Location where
   toType _ = "location"
@@ -62,6 +65,7 @@ data Sticker = Sticker { package :: ID
 instance FromJSON Sticker where
   parseJSON (Object v) = Sticker <$> (ID <$> v .: "packageId")
                                  <*> (ID <$> v .: "stickerId")
+  parseJSON _ = fail "Sticker"
 
 instance Messageable Sticker where
   toType _ = "sticker"

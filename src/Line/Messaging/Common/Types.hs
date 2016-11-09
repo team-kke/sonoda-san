@@ -10,3 +10,5 @@ newtype ID = ID T.Text
 
 instance FromJSON ID where
   parseJSON (Object v) = ID <$> v .: "id"
+  parseJSON (String text) = return $ ID text
+  parseJSON _ = fail "ID"

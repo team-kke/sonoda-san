@@ -7,7 +7,6 @@ module Config (
   ) where
 
 import Cmd (getConfigPath)
-import Data.Text (Text)
 import Data.Yaml (FromJSON, decodeFile)
 import GHC.Generics
 import Line.Messaging.Types (ChannelSecret, ChannelAccessToken)
@@ -24,8 +23,8 @@ instance FromJSON Config
 
 config :: IO Config
 config = do
-  config <- getConfigPath >>= decodeFile
-  case config of
+  maybeConfig <- getConfigPath >>= decodeFile
+  case maybeConfig of
     Just x -> return x
     Nothing -> putStrLn "invalid config" >> exitFailure
 

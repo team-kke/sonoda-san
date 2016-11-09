@@ -11,7 +11,6 @@ import Data.Aeson (ToJSON(..), (.=), object)
 import Data.Text.Encoding (encodeUtf8)
 import Line.Messaging.Types (ChannelAccessToken, ReplyToken, Messageable(..))
 import Network.Wreq
-import qualified Data.Text as T
 import qualified Data.ByteString as B
 
 url :: String -> String
@@ -27,9 +26,7 @@ request :: ToJSON a => String -> a -> APIIO ()
 request apiPath body = do
   token <- encodeUtf8 <$> ask
   let opts = defaults & header "Authorization" .~ ["Bearer " `B.append` token]
-  liftIO $ do
-    postWith opts (url apiPath) (toJSON body)
-    return ()
+  liftIO $ postWith opts (url apiPath) (toJSON body) >> return ()
 
 reply :: Messageable a =>  ReplyToken -> [a] -> APIIO ()
 reply replyToken ms = request "reply" $ object [ "replyToken" .= replyToken

@@ -8,7 +8,6 @@ import Crypto.Hash.SHA256 (hmaclazy)
 import Data.ByteString (ByteString)
 import Data.Text.Encoding (encodeUtf8)
 import Line.Messaging.Types
-import Network.HTTP.Types.Header
 import Network.Wai
 import qualified Data.ByteString.Base64 as Base64
 import qualified Data.ByteString.Lazy as L

@@ -36,10 +36,11 @@ type ReplyToken = T.Text
 --
 -- https://devdocs.line.me/en/#webhook-event-object
 
-newtype Body = Body { events :: [Event] }
+newtype Body = Body [Event]
 
 instance FromJSON Body where
   parseJSON (Object v) = Body <$> v .: "events"
+  parseJSON _ = fail "Body"
 
 data Event = MessageEvent EventSource UTCTime ReplyToken IncomingMessage
            | FollowEvent EventSource UTCTime ReplyToken
@@ -71,6 +72,7 @@ instance FromJSON Event where
       "beacon" -> parseCommon BeaconEvent v `withReplyToken` v
                   <*> v .: "beacon"
       _ -> fail "Event"
+  parseJSON _ = fail "Event"
 
 data EventSource = User ID
                  | Group ID
@@ -84,6 +86,7 @@ instance FromJSON EventSource where
       "group" -> Group . ID <$> v .: "groupId"
       "room" -> Room . ID <$> v .: "roomId"
       _ -> fail "EventSource"
+  parseJSON _ = fail "EventSource"
 
 data IDed a = IDed ID a
             deriving Show
@@ -109,6 +112,7 @@ instance FromJSON IncomingMessage where
       "location" -> LocationMessage <$> parseJSON (Object v)
       "sticker" -> StickerMessage <$> parseJSON (Object v)
       _ -> fail "IncomingMessage"
+  parseJSON _ = fail "IncommingMessage"
 
 data BeaconData = BeaconEnter { hwid :: ID }
                 deriving Show
@@ -118,3 +122,4 @@ instance FromJSON BeaconData where
     case t :: T.Text of
       "enter" -> BeaconEnter . ID <$> v .: "hwid"
       _ -> fail "BeaconData"
+  parseJSON _ = fail "BeaconData"
