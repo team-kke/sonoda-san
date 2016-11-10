@@ -35,7 +35,7 @@ data WebhookResult = Ok
 
 data WebhookFailure = SignatureVerificationFailed
                     | MessageDecodeFailed
-                    deriving Show
+                    deriving (Eq, Show)
 
 type ReplyToken = T.Text
 
@@ -46,13 +46,14 @@ type ReplyToken = T.Text
 -- https://devdocs.line.me/en/#webhook-event-object
 
 newtype Body = Body [Event]
+             deriving (Eq, Show)
 
 instance FromJSON Body where
   parseJSON (Object v) = Body <$> v .: "events"
   parseJSON _ = fail "Body"
 
-data ReplyableMessage a = ReplyableMessage EventSource UTCTime ReplyToken a deriving Show
-data NonReplyableMessage a = NonReplyableMessage EventSource UTCTime a deriving Show
+data ReplyableMessage a = ReplyableMessage EventSource UTCTime ReplyToken a deriving (Eq, Show)
+data NonReplyableMessage a = NonReplyableMessage EventSource UTCTime a deriving (Eq, Show)
 
 class EventMessage m where
   source :: m -> EventSource
@@ -85,7 +86,7 @@ data Event = MessageEvent (ReplyableMessage IncomingMessage)
            | LeaveEvent (NonReplyableMessage ())
            | PostbackEvent (ReplyableMessage T.Text)
            | BeaconEvent (ReplyableMessage BeaconData)
-           deriving Show
+           deriving (Eq, Show)
 
 parseCommon :: (EventSource -> UTCTime -> a) -> Object -> Parser a
 parseCommon f v = f <$> (v .: "source")
@@ -117,7 +118,7 @@ instance FromJSON Event where
 data EventSource = User ID
                  | Group ID
                  | Room ID
-                 deriving Show
+                 deriving (Eq, Show)
 
 instance FromJSON EventSource where
   parseJSON (Object v) = v .: "type" >>= \ t ->
@@ -129,7 +130,7 @@ instance FromJSON EventSource where
   parseJSON _ = fail "EventSource"
 
 data IDed a = IDed ID a
-            deriving Show
+            deriving (Eq, Show)
 
 instance FromJSON a => FromJSON (IDed a) where
   parseJSON v = IDed <$> parseJSON v <*> parseJSON v
@@ -140,7 +141,7 @@ data IncomingMessage = TextIM (IDed Text)
                      | AudioIM ID
                      | LocationIM (IDed Location)
                      | StickerIM (IDed Sticker)
-                     deriving Show
+                     deriving (Eq, Show)
 
 instance FromJSON IncomingMessage where
   parseJSON (Object v) = v .: "type" >>= \ t ->
@@ -155,7 +156,7 @@ instance FromJSON IncomingMessage where
   parseJSON _ = fail "IncommingMessage"
 
 data BeaconData = BeaconEnter { hwid :: ID }
-                deriving Show
+                deriving (Eq, Show)
 
 instance FromJSON BeaconData where
   parseJSON (Object v) = v .: "type" >>= \ t ->

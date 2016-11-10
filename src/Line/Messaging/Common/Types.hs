@@ -8,7 +8,7 @@ import Data.Aeson
 import qualified Data.Text as T
 
 newtype ID = ID T.Text
-           deriving Show
+           deriving (Eq, Ord, Show)
 
 instance FromJSON ID where
   parseJSON (Object v) = ID <$> v .: "id"

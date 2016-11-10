@@ -22,6 +22,7 @@ class Messageable a where
 data OutgoingMessage = TextOM Text
                      | LocationOM Location
                      | StickerOM Sticker
+                     deriving (Eq, Show)
 
 instance ToJSON OutgoingMessage where
   toJSON (TextOM t) = toValue t
@@ -29,7 +30,7 @@ instance ToJSON OutgoingMessage where
   toJSON (StickerOM s) = toValue s
 
 newtype Text = Text T.Text
-             deriving Show
+             deriving (Eq, Ord, Show)
 
 instance FromJSON Text where
   parseJSON (Object v) = Text <$> v .: "text"
@@ -47,7 +48,7 @@ data Location = Location { title :: T.Text
                          , latitude :: Double
                          , longitude :: Double
                          }
-                deriving Show
+                deriving (Eq, Show)
 
 instance FromJSON Location where
   parseJSON (Object v) = Location <$> v .: "title"
@@ -67,7 +68,7 @@ instance Messageable Location where
 data Sticker = Sticker { package :: ID
                        , sticker :: ID
                        }
-               deriving Show
+               deriving (Eq, Show)
 
 instance FromJSON Sticker where
   parseJSON (Object v) = Sticker <$> (ID <$> v .: "packageId")
