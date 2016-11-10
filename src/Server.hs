@@ -4,16 +4,17 @@ module Server (
 
 import Config (getChannelSecret, getChannelAccessToken)
 import Control.Monad (forM_)
-import Line.Messaging.API (runAPI, APIIO, reply, OutgoingMessage(..), Text(..))
+import Line.Messaging.API (runAPI, APIIO, reply, push, OutgoingMessage(..), Text(..))
 import Line.Messaging.Webhook hiding (webhook)
 import Network.Wai
-import Response (response404)
+import Response (response200, response404)
 import qualified Data.Text as T
 
 app :: Application
 app req f =
   case pathInfo req of
     "webhook" : _ -> webhook req f
+    "send" : id' : str : _ -> send id' str req f
     _ -> f response404
 
 webhook :: Application
@@ -42,7 +43,18 @@ handleEvent _ = return ()
 
 handleText :: ReplyableMessage IncomingMessage -> T.Text -> IO ()
 handleText event text
+  | "園田さん、プッシュ" `T.isPrefixOf` text = do
+      let m = T.concat [ "https://karen.noraesae.net/send/"
+                             , toText . identifier . source $ event
+                             , "/メッセージ"
+                             ]
+      api $ reply (replyToken event) [TextOM $ Text m]
   | "園田さん、" `T.isPrefixOf` text = do
       print $ source event
       api $ reply (replyToken event) [TextOM $ Text $ T.drop 5 text]
   | otherwise = return ()
+
+send :: T.Text -> T.Text -> Application
+send id' str _ f = do
+  api $ push (ID id') [TextOM $ Text str]
+  f $ response200 "ok"
