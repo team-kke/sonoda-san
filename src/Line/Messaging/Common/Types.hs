@@ -7,7 +7,7 @@ module Line.Messaging.Common.Types (
 import Data.Aeson
 import qualified Data.Text as T
 
-newtype ID = ID T.Text
+newtype ID = ID { toText :: T.Text }
            deriving (Eq, Ord, Show)
 
 instance FromJSON ID where
