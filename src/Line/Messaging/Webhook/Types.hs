@@ -15,6 +15,7 @@ module Line.Messaging.Webhook.Types (
   postback,
   beacon,
   EventSource (..),
+  identifier,
   IncomingMessage (..),
   IDed (..),
   BeaconData (..),
@@ -119,6 +120,11 @@ data EventSource = User ID
                  | Group ID
                  | Room ID
                  deriving (Eq, Show)
+
+identifier :: EventSource -> ID
+identifier (User i) = i
+identifier (Group i) = i
+identifier (Room i) = i
 
 instance FromJSON EventSource where
   parseJSON (Object v) = v .: "type" >>= \ t ->
