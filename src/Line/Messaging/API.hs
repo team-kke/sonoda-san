@@ -2,6 +2,7 @@ module Line.Messaging.API (
   module Line.Messaging.API.Types,
   APIIO,
   runAPI,
+  push,
   reply,
   ) where
 
@@ -30,7 +31,12 @@ request apiPath body = do
   let opts = defaults & header "Authorization" .~ ["Bearer " `B.append` token]
   liftIO $ postWith opts (url apiPath) (toJSON body) >> return ()
 
-reply ::  ReplyToken -> [OutgoingMessage] -> APIIO ()
+push :: ID -> [OutgoingMessage] -> APIIO ()
+push (ID i) ms = request "push" $ object [ "to" .= i
+                                         , "messages" .= map toJSON ms
+                                         ]
+
+reply :: ReplyToken -> [OutgoingMessage] -> APIIO ()
 reply replyToken ms = request "reply" $ object [ "replyToken" .= replyToken
                                                , "messages" .= map toJSON ms
                                                ]
