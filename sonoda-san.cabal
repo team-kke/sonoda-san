@@ -27,7 +27,6 @@ library
                        Line.Messaging.Webhook.Validation
                        Response
                        Server
-                       Server.Webhook
   build-depends:       base >= 4.7 && < 5
                      , wai
                      , optparse-applicative
