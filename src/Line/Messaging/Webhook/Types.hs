@@ -7,6 +7,13 @@ module Line.Messaging.Webhook.Types (
   Event (..),
   ReplyableEvent,
   NonReplyableEvent,
+  MessageEvent,
+  FollowEvent,
+  UnfollowEvent,
+  JoinEvent,
+  LeaveEvent,
+  PostbackEvent,
+  BeaconEvent,
   EventCommon,
   source,
   datetime,
@@ -56,6 +63,14 @@ instance FromJSON Body where
 data ReplyableEvent a = ReplyableEvent EventSource UTCTime ReplyToken a deriving (Eq, Show)
 data NonReplyableEvent a = NonReplyableEvent EventSource UTCTime a deriving (Eq, Show)
 
+type MessageEvent = ReplyableEvent IncomingMessage
+type FollowEvent = ReplyableEvent ()
+type UnfollowEvent = NonReplyableEvent ()
+type JoinEvent = ReplyableEvent ()
+type LeaveEvent = NonReplyableEvent ()
+type PostbackEvent = ReplyableEvent T.Text
+type BeaconEvent = ReplyableEvent BeaconData
+
 class EventCommon m where
   source :: m -> EventSource
   datetime :: m -> UTCTime
@@ -71,22 +86,22 @@ instance EventCommon (NonReplyableEvent a) where
 replyToken :: ReplyableEvent a -> ReplyToken
 replyToken (ReplyableEvent _ _ x _) = x
 
-message :: ReplyableEvent IncomingMessage -> IncomingMessage
+message :: MessageEvent -> IncomingMessage
 message (ReplyableEvent _ _ _ x) = x
 
-postback :: ReplyableEvent T.Text -> T.Text
+postback :: PostbackEvent -> T.Text
 postback (ReplyableEvent _ _ _ x) = x
 
-beacon :: ReplyableEvent BeaconData -> BeaconData
+beacon :: BeaconEvent -> BeaconData
 beacon (ReplyableEvent _ _ _ x) = x
 
-data Event = MessageEvent (ReplyableEvent IncomingMessage)
-           | FollowEvent (ReplyableEvent ())
-           | UnfollowEvent (NonReplyableEvent ())
-           | JoinEvent (ReplyableEvent ())
-           | LeaveEvent (NonReplyableEvent ())
-           | PostbackEvent (ReplyableEvent T.Text)
-           | BeaconEvent (ReplyableEvent BeaconData)
+data Event = MessageEvent MessageEvent
+           | FollowEvent FollowEvent
+           | UnfollowEvent UnfollowEvent
+           | JoinEvent JoinEvent
+           | LeaveEvent LeaveEvent
+           | PostbackEvent PostbackEvent
+           | BeaconEvent BeaconEvent
            deriving (Eq, Show)
 
 parseCommon :: (EventSource -> UTCTime -> a) -> Object -> Parser a
