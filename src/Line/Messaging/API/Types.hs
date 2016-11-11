@@ -3,6 +3,7 @@ module Line.Messaging.API.Types (
   Location (..),
   Sticker (..),
   Text (..),
+  Image (..),
   OutgoingMessage (..),
   Messageable,
   ) where
@@ -20,12 +21,14 @@ class Messageable a where
   toValue a = object $ ("type" .= toType a) : toObject a
 
 data OutgoingMessage = TextOM Text
+                     | ImageOM Image
                      | LocationOM Location
                      | StickerOM Sticker
                      deriving (Eq, Show)
 
 instance ToJSON OutgoingMessage where
   toJSON (TextOM t) = toValue t
+  toJSON (ImageOM i) = toValue i
   toJSON (LocationOM l) = toValue l
   toJSON (StickerOM s) = toValue s
 
@@ -41,7 +44,16 @@ instance Messageable Text where
   toType _ = "text"
   toObject (Text text) = [ "text" .= text ]
 
--- FIXME: Implement Messageable instances for https://devdocs.line.me/en/#send-message-object
+data Image = Image { originalContentUrl :: String
+                   , previewImageUrl :: String
+                   }
+             deriving (Eq, Show)
+
+instance Messageable Image where
+  toType _ = "image"
+  toObject (Image original preview) = [ "originalContentUrl" .= original
+                                      , "previewImageUrl" .= preview
+                                      ]
 
 data Location = Location { title :: T.Text
                          , address :: T.Text
