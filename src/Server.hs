@@ -4,7 +4,7 @@ module Server (
 
 import Config (getChannelSecret, getChannelAccessToken)
 import Control.Monad (forM_)
-import Line.Messaging.API (runAPI, APIIO, reply, push, OutgoingMessage(..), Text(..))
+import Line.Messaging.API
 import Line.Messaging.Webhook hiding (webhook)
 import Network.Wai
 import Response (response200, response404)
@@ -36,8 +36,6 @@ handleEvent (MessageEvent event) = case message event of
   LocationIM (IDed _ location) -> do
     print location
     api $ reply (replyToken event) [LocationOM location, TextOM $ Text "どこですか？"]
-  StickerIM (IDed _ sticker) -> do
-    api $ reply (replyToken event) [StickerOM sticker]
   _ -> return ()
 handleEvent _ = return ()
 
