@@ -5,9 +5,9 @@ module Line.Messaging.Webhook.Types (
   ReplyToken,
   Body (..),
   Event (..),
-  ReplyableMessage,
-  NonReplyableMessage,
-  EventMessage,
+  ReplyableEvent,
+  NonReplyableEvent,
+  EventCommon,
   source,
   datetime,
   replyToken,
@@ -53,40 +53,40 @@ instance FromJSON Body where
   parseJSON (Object v) = Body <$> v .: "events"
   parseJSON _ = fail "Body"
 
-data ReplyableMessage a = ReplyableMessage EventSource UTCTime ReplyToken a deriving (Eq, Show)
-data NonReplyableMessage a = NonReplyableMessage EventSource UTCTime a deriving (Eq, Show)
+data ReplyableEvent a = ReplyableEvent EventSource UTCTime ReplyToken a deriving (Eq, Show)
+data NonReplyableEvent a = NonReplyableEvent EventSource UTCTime a deriving (Eq, Show)
 
-class EventMessage m where
+class EventCommon m where
   source :: m -> EventSource
   datetime :: m -> UTCTime
 
-instance EventMessage (ReplyableMessage a) where
-  source (ReplyableMessage x _ _ _) = x
-  datetime (ReplyableMessage _ x _ _) = x
+instance EventCommon (ReplyableEvent a) where
+  source (ReplyableEvent x _ _ _) = x
+  datetime (ReplyableEvent _ x _ _) = x
 
-instance EventMessage (NonReplyableMessage a) where
-  source (NonReplyableMessage x _ _) = x
-  datetime (NonReplyableMessage _ x _) = x
+instance EventCommon (NonReplyableEvent a) where
+  source (NonReplyableEvent x _ _) = x
+  datetime (NonReplyableEvent _ x _) = x
 
-replyToken :: ReplyableMessage a -> ReplyToken
-replyToken (ReplyableMessage _ _ x _) = x
+replyToken :: ReplyableEvent a -> ReplyToken
+replyToken (ReplyableEvent _ _ x _) = x
 
-message :: ReplyableMessage IncomingMessage -> IncomingMessage
-message (ReplyableMessage _ _ _ x) = x
+message :: ReplyableEvent IncomingMessage -> IncomingMessage
+message (ReplyableEvent _ _ _ x) = x
 
-postback :: ReplyableMessage T.Text -> T.Text
-postback (ReplyableMessage _ _ _ x) = x
+postback :: ReplyableEvent T.Text -> T.Text
+postback (ReplyableEvent _ _ _ x) = x
 
-beacon :: ReplyableMessage BeaconData -> BeaconData
-beacon (ReplyableMessage _ _ _ x) = x
+beacon :: ReplyableEvent BeaconData -> BeaconData
+beacon (ReplyableEvent _ _ _ x) = x
 
-data Event = MessageEvent (ReplyableMessage IncomingMessage)
-           | FollowEvent (ReplyableMessage ())
-           | UnfollowEvent (NonReplyableMessage ())
-           | JoinEvent (ReplyableMessage ())
-           | LeaveEvent (NonReplyableMessage ())
-           | PostbackEvent (ReplyableMessage T.Text)
-           | BeaconEvent (ReplyableMessage BeaconData)
+data Event = MessageEvent (ReplyableEvent IncomingMessage)
+           | FollowEvent (ReplyableEvent ())
+           | UnfollowEvent (NonReplyableEvent ())
+           | JoinEvent (ReplyableEvent ())
+           | LeaveEvent (NonReplyableEvent ())
+           | PostbackEvent (ReplyableEvent T.Text)
+           | BeaconEvent (ReplyableEvent BeaconData)
            deriving (Eq, Show)
 
 parseCommon :: (EventSource -> UTCTime -> a) -> Object -> Parser a
@@ -99,19 +99,19 @@ withReplyToken p v = p <*> v .: "replyToken"
 instance FromJSON Event where
   parseJSON (Object v) = v .: "type" >>= \ t ->
     case t :: T.Text of
-      "message" -> MessageEvent <$> (parseCommon ReplyableMessage v `withReplyToken` v
+      "message" -> MessageEvent <$> (parseCommon ReplyableEvent v `withReplyToken` v
                                       <*> v .: "message")
-      "follow" -> FollowEvent <$> (parseCommon ReplyableMessage v `withReplyToken` v
+      "follow" -> FollowEvent <$> (parseCommon ReplyableEvent v `withReplyToken` v
                                     <*> return ())
-      "unfollow" -> UnfollowEvent <$> (parseCommon NonReplyableMessage v
+      "unfollow" -> UnfollowEvent <$> (parseCommon NonReplyableEvent v
                                         <*> return ())
-      "join" -> JoinEvent <$> (parseCommon ReplyableMessage v `withReplyToken` v
+      "join" -> JoinEvent <$> (parseCommon ReplyableEvent v `withReplyToken` v
                                 <*> return ())
-      "leave" -> LeaveEvent <$> (parseCommon NonReplyableMessage v
+      "leave" -> LeaveEvent <$> (parseCommon NonReplyableEvent v
                                   <*> return ())
-      "postback" -> PostbackEvent <$> (parseCommon ReplyableMessage v `withReplyToken` v
+      "postback" -> PostbackEvent <$> (parseCommon ReplyableEvent v `withReplyToken` v
                                         <*> ((v .: "postback") >>= (.: "data")))
-      "beacon" -> BeaconEvent <$> (parseCommon ReplyableMessage v `withReplyToken` v
+      "beacon" -> BeaconEvent <$> (parseCommon ReplyableEvent v `withReplyToken` v
                                     <*> v .: "beacon")
       _ -> fail "Event"
   parseJSON _ = fail "Event"

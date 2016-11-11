@@ -41,7 +41,7 @@ handleEvent (MessageEvent event) = case message event of
   _ -> return ()
 handleEvent _ = return ()
 
-handleText :: ReplyableMessage IncomingMessage -> T.Text -> IO ()
+handleText :: ReplyableEvent IncomingMessage -> T.Text -> IO ()
 handleText event text
   | "園田さん、プッシュ" `T.isPrefixOf` text = do
       let m = T.concat [ "https://karen.noraesae.net/send/"
