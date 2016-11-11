@@ -1,9 +1,11 @@
 module Line.Messaging.API.Types (
   module Line.Messaging.Common.Types,
-  Location (..),
-  Sticker (..),
   Text (..),
   Image (..),
+  Video (..),
+  Audio (..),
+  Location (..),
+  Sticker (..),
   OutgoingMessage (..),
   Messageable,
   ) where
@@ -22,6 +24,8 @@ class Messageable a where
 
 data OutgoingMessage = TextOM Text
                      | ImageOM Image
+                     | VideoOM Video
+                     | AudioOM Audio
                      | LocationOM Location
                      | StickerOM Sticker
                      deriving (Eq, Show)
@@ -29,6 +33,8 @@ data OutgoingMessage = TextOM Text
 instance ToJSON OutgoingMessage where
   toJSON (TextOM t) = toValue t
   toJSON (ImageOM i) = toValue i
+  toJSON (VideoOM v) = toValue v
+  toJSON (AudioOM a) = toValue a
   toJSON (LocationOM l) = toValue l
   toJSON (StickerOM s) = toValue s
 
@@ -44,8 +50,8 @@ instance Messageable Text where
   toType _ = "text"
   toObject (Text text) = [ "text" .= text ]
 
-data Image = Image { originalContentUrl :: String
-                   , previewImageUrl :: String
+data Image = Image { imageURL :: String
+                   , imagePreviewURL :: String
                    }
              deriving (Eq, Show)
 
@@ -54,6 +60,28 @@ instance Messageable Image where
   toObject (Image original preview) = [ "originalContentUrl" .= original
                                       , "previewImageUrl" .= preview
                                       ]
+
+data Video = Video { videoURL :: String
+                   , videoPreviewURL :: String
+                   }
+             deriving (Eq, Show)
+
+instance Messageable Video where
+  toType _ = "video"
+  toObject (Video original preview) = [ "originalContentUrl" .= original
+                                      , "previewImageUrl" .= preview
+                                      ]
+
+data Audio = Audio { audioURL :: String
+                   , audioDuration :: Integer
+                   }
+             deriving (Eq, Show)
+
+instance Messageable Audio where
+  toType _ = "audio"
+  toObject (Audio original duration) = [ "originalContentUrl" .= original
+                                       , "duration" .= duration
+                                       ]
 
 data Location = Location { title :: T.Text
                          , address :: T.Text
