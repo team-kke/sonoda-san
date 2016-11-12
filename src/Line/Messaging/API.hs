@@ -13,30 +13,37 @@ import Data.Aeson (ToJSON(..), (.=), object)
 import Data.Text.Encoding (encodeUtf8)
 import Line.Messaging.API.Types
 import Line.Messaging.Types (ChannelAccessToken, ReplyToken)
-import Network.Wreq
+import Network.Wreq (getWith, postWith, defaults, header, Options, Response)
 import qualified Data.ByteString as B
-
-url :: String -> String
-url = (++) "https://api.line.me/v2/bot/message/"
+import qualified Data.ByteString.Lazy as BL
 
 type APIIO a = ReaderT ChannelAccessToken IO a
 
 runAPI :: IO ChannelAccessToken -> APIIO a -> IO a
 runAPI getToken api = getToken >>= runReaderT api
 
--- FIXME: return response object
-request :: ToJSON a => String -> a -> APIIO ()
-request apiPath body = do
+getOpts :: APIIO Options
+getOpts = do
   token <- encodeUtf8 <$> ask
-  let opts = defaults & header "Authorization" .~ ["Bearer " `B.append` token]
-  liftIO $ postWith opts (url apiPath) (toJSON body) >> return ()
+  return $ defaults & header "Authorization" .~ ["Bearer " `B.append` token]
+
+post :: ToJSON a => String -> a -> APIIO (Response BL.ByteString)
+post url body = do
+  opts <- getOpts
+  liftIO $ postWith opts url (toJSON body)
 
 push :: ID -> [OutgoingMessage] -> APIIO ()
-push (ID i) ms = request "push" $ object [ "to" .= i
-                                         , "messages" .= map toJSON ms
-                                         ]
+push (ID i) ms = do
+  let url = "https://api.line.me/v2/bot/message/push"
+  _ <- post url $ object [ "to" .= i
+                         , "messages" .= map toJSON ms
+                         ]
+  return ()
 
 reply :: ReplyToken -> [OutgoingMessage] -> APIIO ()
-reply replyToken ms = request "reply" $ object [ "replyToken" .= replyToken
-                                               , "messages" .= map toJSON ms
-                                               ]
+reply replyToken ms = do
+  let url = "https://api.line.me/v2/bot/message/reply"
+  _ <- post url $ object [ "replyToken" .= replyToken
+                         , "messages" .= map toJSON ms
+                         ]
+  return ()
