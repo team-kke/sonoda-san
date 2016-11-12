@@ -4,18 +4,20 @@ module Line.Messaging.API (
   runAPI,
   push,
   reply,
+  getContent,
   ) where
 
-import Control.Lens ((&), (.~))
+import Control.Lens ((&), (.~), (^.))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (runReaderT, ReaderT, ask)
 import Data.Aeson (ToJSON(..), (.=), object)
 import Data.Text.Encoding (encodeUtf8)
 import Line.Messaging.API.Types
 import Line.Messaging.Types (ChannelAccessToken, ReplyToken)
-import Network.Wreq (getWith, postWith, defaults, header, Options, Response)
+import Network.Wreq (getWith, postWith, defaults, header, Options, Response, responseBody)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.Text as T
 
 type APIIO a = ReaderT ChannelAccessToken IO a
 
@@ -26,6 +28,11 @@ getOpts :: APIIO Options
 getOpts = do
   token <- encodeUtf8 <$> ask
   return $ defaults & header "Authorization" .~ ["Bearer " `B.append` token]
+
+get :: String -> APIIO (Response BL.ByteString)
+get url = do
+  opts <- getOpts
+  liftIO $ getWith opts url
 
 post :: ToJSON a => String -> a -> APIIO (Response BL.ByteString)
 post url body = do
@@ -47,3 +54,12 @@ reply replyToken ms = do
                          , "messages" .= map toJSON ms
                          ]
   return ()
+
+getContent :: ID -> APIIO BL.ByteString
+getContent i = do
+  let url = concat ["https://api.line.me/v2/bot/message/"
+                   , T.unpack . toText $ i
+                   , "/content"
+                   ]
+  r <- get url
+  return $ r ^. responseBody
