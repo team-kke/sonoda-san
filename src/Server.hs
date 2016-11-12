@@ -4,10 +4,13 @@ module Server (
 
 import Config (getChannelSecret, getChannelAccessToken)
 import Control.Monad (forM_)
+import Data.UUID (toString)
+import Data.UUID.V4 (nextRandom)
 import Line.Messaging.API
 import Line.Messaging.Webhook hiding (webhook)
 import Network.Wai
 import Response (response200, response404)
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 
 app :: Application
@@ -33,6 +36,8 @@ api = runAPI getChannelAccessToken
 handleEvent :: Event -> IO ()
 handleEvent (MessageEvent event) = case message event of
   TextIM (IDed _ (Text text)) -> handleText event text
+  ImageIM id' -> downloadContent id' ".jpg"
+  VideoIM id' -> downloadContent id' ".mp4"
   LocationIM (IDed _ location) -> do
     print location
     api $ reply (replyToken event) [LocationOM location, TextOM $ Text "どこですか？"]
@@ -56,3 +61,9 @@ send :: T.Text -> T.Text -> Application
 send id' str _ f = do
   api $ push (ID id') [TextOM $ Text str]
   f $ response200 "ok"
+
+downloadContent :: ID -> String -> IO ()
+downloadContent id' ext = do
+  c <- api $ getContent id'
+  name <- fmap ((++ ext) . toString) nextRandom
+  BL.writeFile name c

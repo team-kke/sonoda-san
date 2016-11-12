@@ -41,6 +41,7 @@ library
                      , time
                      , wreq
                      , lens
+                     , uuid
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
 
