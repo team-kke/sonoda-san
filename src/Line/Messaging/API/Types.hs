@@ -8,6 +8,7 @@ module Line.Messaging.API.Types (
   Sticker (..),
   OutgoingMessage (..),
   Messageable,
+  Profile (..),
   ) where
 
 import Data.Aeson (FromJSON(..), ToJSON(..), Value(..), object, (.:), (.=))
@@ -120,3 +121,17 @@ instance Messageable Sticker where
   toObject (Sticker packageId stickerId) = [ "packageId" .= packageId
                                            , "stickerId" .= stickerId
                                            ]
+
+data Profile = Profile { userId :: ID
+                       , displayName :: T.Text
+                       , pictureURL :: Maybe T.Text
+                       , statusMessage :: Maybe T.Text
+                       }
+               deriving (Eq, Show)
+
+instance FromJSON Profile where
+  parseJSON (Object v) = Profile <$> v .: "userId"
+                                 <*> v .: "displayName"
+                                 <*> v .: "pictureUrl"
+                                 <*> v .: "statusMessage"
+  parseJSON _ = fail "Profile"

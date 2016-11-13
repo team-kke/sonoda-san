@@ -5,6 +5,7 @@ module Line.Messaging.API (
   push,
   reply,
   getContent,
+  getProfile,
   ) where
 
 import Control.Lens ((&), (.~), (^.))
@@ -14,11 +15,12 @@ import Data.Aeson (ToJSON(..), (.=), object)
 import Data.Text.Encoding (encodeUtf8)
 import Line.Messaging.API.Types
 import Line.Messaging.Types (ChannelAccessToken, ReplyToken)
-import Network.Wreq (getWith, postWith, defaults, header, Options, Response, responseBody)
+import Network.Wreq (getWith, postWith, defaults, header, Options, Response, responseBody, asJSON)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 
+-- FIXME: Add ExceptT for error handling
 type APIIO a = ReaderT ChannelAccessToken IO a
 
 runAPI :: IO ChannelAccessToken -> APIIO a -> IO a
@@ -62,4 +64,10 @@ getContent id' = do
                    , "/content"
                    ]
   r <- get url
+  return $ r ^. responseBody
+
+getProfile :: ID -> APIIO Profile
+getProfile id' = do
+  let url = "https://api.line.me/v2/bot/profile/" ++ T.unpack id'
+  r <- get url >>= asJSON
   return $ r ^. responseBody
