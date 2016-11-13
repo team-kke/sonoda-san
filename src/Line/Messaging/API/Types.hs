@@ -50,8 +50,8 @@ instance Messageable Text where
   toType _ = "text"
   toObject (Text text) = [ "text" .= text ]
 
-data Image = Image { imageURL :: String
-                   , imagePreviewURL :: String
+data Image = Image { imageURL :: T.Text
+                   , imagePreviewURL :: T.Text
                    }
              deriving (Eq, Show)
 
@@ -61,8 +61,8 @@ instance Messageable Image where
                                       , "previewImageUrl" .= preview
                                       ]
 
-data Video = Video { videoURL :: String
-                   , videoPreviewURL :: String
+data Video = Video { videoURL :: T.Text
+                   , videoPreviewURL :: T.Text
                    }
              deriving (Eq, Show)
 
@@ -72,7 +72,7 @@ instance Messageable Video where
                                       , "previewImageUrl" .= preview
                                       ]
 
-data Audio = Audio { audioURL :: String
+data Audio = Audio { audioURL :: T.Text
                    , audioDuration :: Integer
                    }
              deriving (Eq, Show)
