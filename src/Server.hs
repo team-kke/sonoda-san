@@ -35,10 +35,10 @@ api = runAPI getChannelAccessToken
 
 handleEvent :: Event -> IO ()
 handleEvent (MessageEvent event) = case message event of
-  TextIM (IDed _ (Text text)) -> handleText event text
+  TextIM _ (Text text) -> handleText event text
   ImageIM id' -> downloadContent id' ".jpg"
   VideoIM id' -> downloadContent id' ".mp4"
-  LocationIM (IDed _ location) -> do
+  LocationIM  _ location -> do
     print location
     api $ reply (replyToken event) [LocationOM location, TextOM $ Text "どこですか？"]
   _ -> return ()
@@ -48,9 +48,9 @@ handleText :: MessageEvent -> T.Text -> IO ()
 handleText event text
   | "園田さん、プッシュ" `T.isPrefixOf` text = do
       let m = T.concat [ "https://karen.noraesae.net/send/"
-                             , toText . identifier . source $ event
-                             , "/メッセージ"
-                             ]
+                       , identifier . source $ event
+                       , "/メッセージ"
+                       ]
       api $ reply (replyToken event) [TextOM $ Text m]
   | "園田さん、" `T.isPrefixOf` text = do
       print $ source event
@@ -59,7 +59,7 @@ handleText event text
 
 send :: T.Text -> T.Text -> Application
 send id' str _ f = do
-  api $ push (ID id') [TextOM $ Text str]
+  api $ push id' [TextOM $ Text str]
   f $ response200 "ok"
 
 downloadContent :: ID -> String -> IO ()

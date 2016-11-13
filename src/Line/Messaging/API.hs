@@ -40,9 +40,9 @@ post url body = do
   liftIO $ postWith opts url (toJSON body)
 
 push :: ID -> [OutgoingMessage] -> APIIO ()
-push (ID i) ms = do
+push id' ms = do
   let url = "https://api.line.me/v2/bot/message/push"
-  _ <- post url $ object [ "to" .= i
+  _ <- post url $ object [ "to" .= id'
                          , "messages" .= map toJSON ms
                          ]
   return ()
@@ -56,9 +56,9 @@ reply replyToken ms = do
   return ()
 
 getContent :: ID -> APIIO BL.ByteString
-getContent i = do
+getContent id' = do
   let url = concat ["https://api.line.me/v2/bot/message/"
-                   , T.unpack . toText $ i
+                   , T.unpack id'
                    , "/content"
                    ]
   r <- get url

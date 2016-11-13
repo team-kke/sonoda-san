@@ -12,7 +12,7 @@ module Line.Messaging.API.Types (
 
 import Data.Aeson (FromJSON(..), ToJSON(..), Value(..), object, (.:), (.=))
 import Data.Aeson.Types (Pair)
-import Line.Messaging.Common.Types (ID(..))
+import Line.Messaging.Common.Types (ID)
 import qualified Data.Text as T
 
 class Messageable a where
@@ -111,12 +111,12 @@ data Sticker = Sticker { package :: ID
                deriving (Eq, Show)
 
 instance FromJSON Sticker where
-  parseJSON (Object v) = Sticker <$> (ID <$> v .: "packageId")
-                                 <*> (ID <$> v .: "stickerId")
+  parseJSON (Object v) = Sticker <$> v .: "packageId"
+                                 <*> v .: "stickerId"
   parseJSON _ = fail "Sticker"
 
 instance Messageable Sticker where
   toType _ = "sticker"
-  toObject (Sticker (ID packageId) (ID stickerId)) = [ "packageId" .= packageId
-                                                     , "stickerId" .= stickerId
-                                                     ]
+  toObject (Sticker packageId stickerId) = [ "packageId" .= packageId
+                                           , "stickerId" .= stickerId
+                                           ]

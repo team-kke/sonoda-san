@@ -24,7 +24,6 @@ module Line.Messaging.Webhook.Types (
   EventSource (..),
   identifier,
   IncomingMessage (..),
-  IDed (..),
   BeaconData (..),
   ) where
 
@@ -144,35 +143,29 @@ identifier (Room i) = i
 instance FromJSON EventSource where
   parseJSON (Object v) = v .: "type" >>= \ t ->
     case t :: T.Text of
-      "user" -> User . ID <$> v .: "userId"
-      "group" -> Group . ID <$> v .: "groupId"
-      "room" -> Room . ID <$> v .: "roomId"
+      "user" -> User <$> v .: "userId"
+      "group" -> Group <$> v .: "groupId"
+      "room" -> Room <$> v .: "roomId"
       _ -> fail "EventSource"
   parseJSON _ = fail "EventSource"
 
-data IDed a = IDed ID a
-            deriving (Eq, Show)
-
-instance FromJSON a => FromJSON (IDed a) where
-  parseJSON v = IDed <$> parseJSON v <*> parseJSON v
-
-data IncomingMessage = TextIM (IDed Text)
+data IncomingMessage = TextIM ID Text
                      | ImageIM ID
                      | VideoIM ID
                      | AudioIM ID
-                     | LocationIM (IDed Location)
-                     | StickerIM (IDed Sticker)
+                     | LocationIM ID Location
+                     | StickerIM ID Sticker
                      deriving (Eq, Show)
 
 instance FromJSON IncomingMessage where
   parseJSON (Object v) = v .: "type" >>= \ t ->
     case t :: T.Text of
-      "text" -> TextIM <$> parseJSON (Object v)
-      "image" -> ImageIM <$> parseJSON (Object v)
-      "video" -> VideoIM <$> parseJSON (Object v)
-      "audio" -> AudioIM <$> parseJSON (Object v)
-      "location" -> LocationIM <$> parseJSON (Object v)
-      "sticker" -> StickerIM <$> parseJSON (Object v)
+      "text" -> TextIM <$> v .: "id" <*> parseJSON (Object v)
+      "image" -> ImageIM <$> v .: "id"
+      "video" -> VideoIM <$> v .: "id"
+      "audio" -> AudioIM <$> v .: "id"
+      "location" -> LocationIM <$> v .: "id" <*> parseJSON (Object v)
+      "sticker" -> StickerIM <$> v .: "id" <*> parseJSON (Object v)
       _ -> fail "IncomingMessage"
   parseJSON _ = fail "IncommingMessage"
 
@@ -182,6 +175,6 @@ data BeaconData = BeaconEnter { hwid :: ID }
 instance FromJSON BeaconData where
   parseJSON (Object v) = v .: "type" >>= \ t ->
     case t :: T.Text of
-      "enter" -> BeaconEnter . ID <$> v .: "hwid"
+      "enter" -> BeaconEnter <$> v .: "hwid"
       _ -> fail "BeaconData"
   parseJSON _ = fail "BeaconData"
