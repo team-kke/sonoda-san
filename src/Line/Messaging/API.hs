@@ -6,6 +6,8 @@ module Line.Messaging.API (
   reply,
   getContent,
   getProfile,
+  leaveRoom,
+  leaveGroup,
   ) where
 
 import Control.Lens ((&), (.~), (^.))
@@ -71,3 +73,20 @@ getProfile id' = do
   let url = "https://api.line.me/v2/bot/profile/" ++ T.unpack id'
   r <- get url >>= asJSON
   return $ r ^. responseBody
+
+leave :: String -> ID -> APIIO ()
+leave type' id' = do
+  let url = concat [ "https://api.line.me/v2/bot/"
+                   , type'
+                   , "/"
+                   , T.unpack id'
+                   , "/leave"
+                   ]
+  _ <- post url ("" :: T.Text)
+  return ()
+
+leaveRoom :: ID -> APIIO ()
+leaveRoom = leave "room"
+
+leaveGroup :: ID -> APIIO ()
+leaveGroup = leave "group"
