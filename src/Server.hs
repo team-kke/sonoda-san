@@ -57,7 +57,7 @@ handleText event text
       api $ reply (replyToken event) [TextOM $ Text $ T.drop 5 text]
   | otherwise = return ()
 
-send :: T.Text -> T.Text -> Application
+send :: ID -> T.Text -> Application
 send id' str _ f = do
   api $ push id' [TextOM $ Text str]
   f $ response200 "ok"
@@ -65,5 +65,5 @@ send id' str _ f = do
 downloadContent :: ID -> String -> IO ()
 downloadContent id' ext = do
   c <- api $ getContent id'
-  name <- fmap ((++ ext) . toString) nextRandom
-  BL.writeFile name c
+  name <- (++ ext) . toString <$> nextRandom
+  BL.writeFile name  c

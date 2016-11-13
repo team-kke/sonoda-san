@@ -107,7 +107,7 @@ parseCommon :: (EventSource -> UTCTime -> a) -> Object -> Parser a
 parseCommon f v = f <$> (v .: "source")
                     <*> (posixSecondsToUTCTime . (/ 1000) . fromInteger <$> v .: "timestamp")
 
-withReplyToken :: Parser (T.Text -> a) -> Object -> Parser a
+withReplyToken :: Parser (ReplyToken -> a) -> Object -> Parser a
 withReplyToken p v = p <*> v .: "replyToken"
 
 instance FromJSON Event where
