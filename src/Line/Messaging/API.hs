@@ -61,7 +61,7 @@ reply replyToken ms = do
 
 getContent :: ID -> APIIO BL.ByteString
 getContent id' = do
-  let url = concat ["https://api.line.me/v2/bot/message/"
+  let url = concat [ "https://api.line.me/v2/bot/message/"
                    , T.unpack id'
                    , "/content"
                    ]
