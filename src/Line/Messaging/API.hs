@@ -31,7 +31,7 @@ runAPI getToken api = getToken >>= runReaderT api
 getOpts :: APIIO Options
 getOpts = do
   token <- encodeUtf8 <$> ask
-  return $ defaults & header "Authorization" .~ ["Bearer " `B.append` token]
+  return $ defaults & header "Authorization" .~ [ "Bearer " `B.append` token ]
 
 get :: String -> APIIO (Response BL.ByteString)
 get url = do
