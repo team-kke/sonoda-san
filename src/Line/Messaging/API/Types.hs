@@ -6,13 +6,14 @@ module Line.Messaging.API.Types (
   Audio (..),
   Location (..),
   Sticker (..),
+  ImageMap (..),
   OutgoingMessage (..),
   Messageable,
   Profile (..),
   ) where
 
 import Data.Aeson (FromJSON(..), ToJSON(..), Value(..), object, (.:), (.=))
-import Data.Aeson.Types (Pair)
+import Data.Aeson.Types (Pair, Parser, Object)
 import Line.Messaging.Common.Types (ID)
 import qualified Data.Text as T
 
@@ -29,6 +30,7 @@ data OutgoingMessage = TextOM Text
                      | AudioOM Audio
                      | LocationOM Location
                      | StickerOM Sticker
+                     | ImageMapOM ImageMap
                      deriving (Eq, Show)
 
 instance ToJSON OutgoingMessage where
@@ -38,6 +40,7 @@ instance ToJSON OutgoingMessage where
   toJSON (AudioOM a) = toValue a
   toJSON (LocationOM l) = toValue l
   toJSON (StickerOM s) = toValue s
+  toJSON (ImageMapOM im) = toValue im
 
 newtype Text = Text T.Text
              deriving (Eq, Ord, Show)
@@ -121,6 +124,30 @@ instance Messageable Sticker where
   toObject (Sticker packageId stickerId) = [ "packageId" .= packageId
                                            , "stickerId" .= stickerId
                                            ]
+
+data ImageMap = ImageMap { baseImageURL :: T.Text
+                         , altText :: T.Text
+                         , baseImageWidth :: Integer -- set to 1040
+                         , baseImageHeight :: Integer
+                         , actions :: [ImageMapAction]
+                         }
+                deriving (Eq, Show)
+
+instance Messageable ImageMap where
+  toType _ = "imagemap"
+  toObject _ = undefined
+
+data ImageMapAction = ImageMapActionURI T.Text ImageMapArea
+                    | ImageMapActionMessage T.Text ImageMapArea
+                    deriving (Eq, Show)
+
+instance FromJSON ImageMapAction where
+  parseJSON = undefined
+
+type ImageMapArea = (Integer, Integer, Integer, Integer) -- x y width height
+
+parseArea :: Object -> Parser (ImageMapArea -> a) -> Parser a
+parseArea = undefined
 
 data Profile = Profile { userId :: ID
                        , displayName :: T.Text
