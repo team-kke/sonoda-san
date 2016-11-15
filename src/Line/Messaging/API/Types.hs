@@ -14,7 +14,7 @@ module Line.Messaging.API.Types (
 
 import Data.Aeson (FromJSON(..), ToJSON(..), Value(..), object, (.:), (.=))
 import Data.Aeson.Types (Pair, Parser, Object)
-import Line.Messaging.Common.Types (ID)
+import Line.Messaging.Common.Types
 import qualified Data.Text as T
 
 class Messageable a where
@@ -54,8 +54,8 @@ instance Messageable Text where
   toType _ = "text"
   toObject (Text text) = [ "text" .= text ]
 
-data Image = Image { imageURL :: T.Text
-                   , imagePreviewURL :: T.Text
+data Image = Image { imageURL :: URL
+                   , imagePreviewURL :: URL
                    }
              deriving (Eq, Show)
 
@@ -65,8 +65,8 @@ instance Messageable Image where
                                       , "previewImageUrl" .= preview
                                       ]
 
-data Video = Video { videoURL :: T.Text
-                   , videoPreviewURL :: T.Text
+data Video = Video { videoURL :: URL
+                   , videoPreviewURL :: URL
                    }
              deriving (Eq, Show)
 
@@ -76,7 +76,7 @@ instance Messageable Video where
                                       , "previewImageUrl" .= preview
                                       ]
 
-data Audio = Audio { audioURL :: T.Text
+data Audio = Audio { audioURL :: URL
                    , audioDuration :: Integer
                    }
              deriving (Eq, Show)
@@ -125,7 +125,7 @@ instance Messageable Sticker where
                                            , "stickerId" .= stickerId
                                            ]
 
-data ImageMap = ImageMap { baseImageURL :: T.Text
+data ImageMap = ImageMap { baseImageURL :: URL
                          , altText :: T.Text
                          , baseImageWidth :: Integer -- set to 1040
                          , baseImageHeight :: Integer
@@ -151,7 +151,7 @@ parseArea = undefined
 
 data Profile = Profile { userId :: ID
                        , displayName :: T.Text
-                       , pictureURL :: Maybe T.Text
+                       , pictureURL :: Maybe URL
                        , statusMessage :: Maybe T.Text
                        }
                deriving (Eq, Show)
