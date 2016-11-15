@@ -7,13 +7,15 @@ module Line.Messaging.API.Types (
   Location (..),
   Sticker (..),
   ImageMap (..),
+  ImageMapAction (..),
+  ImageMapArea,
   OutgoingMessage (..),
   Messageable,
   Profile (..),
   ) where
 
 import Data.Aeson (FromJSON(..), ToJSON(..), Value(..), object, (.:), (.=))
-import Data.Aeson.Types (Pair, Parser, Object)
+import Data.Aeson.Types (Pair)
 import Line.Messaging.Common.Types
 import qualified Data.Text as T
 
@@ -135,19 +137,32 @@ data ImageMap = ImageMap { baseImageURL :: URL
 
 instance Messageable ImageMap where
   toType _ = "imagemap"
-  toObject _ = undefined
+  toObject (ImageMap url alt w h as) = [ "baseUrl" .= url
+                                       , "altText" .= alt
+                                       , "baseSize" .= object [ "width" .= w
+                                                              , "height" .= h
+                                                              ]
+                                       , "actions" .= toJSON as
+                                       ]
 
 data ImageMapAction = ImageMapActionURI T.Text ImageMapArea
                     | ImageMapActionMessage T.Text ImageMapArea
                     deriving (Eq, Show)
 
-instance FromJSON ImageMapAction where
-  parseJSON = undefined
+instance ToJSON ImageMapAction where
+  toJSON (ImageMapActionURI uri area) = object [ "type" .= ("uri" :: T.Text)
+                                               , "linkUri" .= uri
+                                               , "area" .= toAreaJSON area
+                                               ]
+  toJSON (ImageMapActionMessage text area) = object [ "type" .= ("message" :: T.Text)
+                                                    , "text" .= text
+                                                    , "area" .= toAreaJSON area
+                                                    ]
 
 type ImageMapArea = (Integer, Integer, Integer, Integer) -- x y width height
 
-parseArea :: Object -> Parser (ImageMapArea -> a) -> Parser a
-parseArea = undefined
+toAreaJSON :: ImageMapArea -> Value
+toAreaJSON (x, y, w, h) = object [ "x" .= x, "y" .= y, "width" .= w, "height" .= h ]
 
 data Profile = Profile { userId :: ID
                        , displayName :: T.Text
