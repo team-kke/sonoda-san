@@ -128,7 +128,7 @@ instance Messageable Sticker where
                                            ]
 
 data ImageMap = ImageMap { baseImageURL :: URL
-                         , altText :: T.Text
+                         , imageMapAltText :: T.Text
                          , baseImageWidth :: Integer -- set to 1040
                          , baseImageHeight :: Integer
                          , actions :: [ImageMapAction]
