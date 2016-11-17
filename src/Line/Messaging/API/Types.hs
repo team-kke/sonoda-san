@@ -1,4 +1,5 @@
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Line.Messaging.API.Types (
@@ -14,6 +15,10 @@ module Line.Messaging.API.Types (
   ImageMap (..),
   ImageMapAction (..),
   ImageMapArea,
+  Template (..),
+  Buttons (..),
+  Label,
+  TemplateAction (..),
   Profile (..),
   ) where
 
@@ -154,6 +159,54 @@ type ImageMapArea = (Integer, Integer, Integer, Integer) -- x y width height
 
 toAreaJSON :: ImageMapArea -> Value
 toAreaJSON (x, y, w, h) = object [ "x" .= x, "y" .= y, "width" .= w, "height" .= h ]
+
+data Template t = Template { getTemplateAltText :: T.Text
+                           , getTemplate :: t
+                           }
+                  deriving (Eq, Show)
+
+instance Messageable (Template Buttons) where
+  toType _ = "template"
+  toObject (Template alt buttons) = [ "altText" .= alt
+                                    , "template" .= toJSON buttons
+                                    ]
+
+data Buttons = Buttons { getThumbnailImageURL :: URL
+                       , getButtonsTitle :: T.Text
+                       , getButtonsText :: T.Text
+                       , getTemplateActions :: [TemplateAction]
+                       }
+               deriving (Eq, Show)
+
+instance ToJSON Buttons where
+  toJSON (Buttons url title text actions) = object [ "type" .= ("buttons" :: T.Text)
+                                                   , "thumbnailImageUrl" .= url
+                                                   , "title" .= title
+                                                   , "text" .= text
+                                                   , "actions" .= toJSON actions
+                                                   ]
+
+type Label = T.Text
+
+data TemplateAction = TplPostbackAction Label T.Text T.Text
+                    | TplMessageAction Label T.Text
+                    | TplURIAction Label URL
+                    deriving (Eq, Show)
+
+instance ToJSON TemplateAction where
+  toJSON (TplPostbackAction label data' text) = object [ "type" .= ("postback" :: T.Text)
+                                                       , "label" .= label
+                                                       , "data" .= data'
+                                                       , "text" .= text
+                                                       ]
+  toJSON (TplMessageAction label text) = object [ "type" .= ("message" :: T.Text)
+                                                , "label" .= label
+                                                , "text" .= text
+                                                ]
+  toJSON (TplURIAction label uri) = object [ "type" .= ("uri" :: T.Text)
+                                           , "label" .= label
+                                           , "uri" .= uri
+                                           ]
 
 data Profile = Profile { getUserID :: ID
                        , getDisplayName :: T.Text
