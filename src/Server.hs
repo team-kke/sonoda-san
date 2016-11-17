@@ -34,27 +34,27 @@ api :: APIIO a -> IO a
 api = runAPI getChannelAccessToken
 
 handleEvent :: Event -> IO ()
-handleEvent (MessageEvent event) = case message event of
-  TextIM _ (Text text) -> handleText event text
-  ImageIM id' -> downloadContent id' ".jpg"
-  VideoIM id' -> downloadContent id' ".mp4"
-  LocationIM  _ location -> do
+handleEvent (MessageEvent event) = case getMessage event of
+  TextEM _ (Text text) -> handleText (getSource event) (getReplyToken event) text
+  ImageEM id' -> downloadContent id' ".jpg"
+  VideoEM id' -> downloadContent id' ".mp4"
+  LocationEM  _ location -> do
     print location
-    api $ reply (replyToken event) [Message location, Message $ Text "どこですか？"]
+    api $ reply (getReplyToken event) [Message location, Message $ Text "どこですか？"]
   _ -> return ()
 handleEvent _ = return ()
 
-handleText :: MessageEvent -> T.Text -> IO ()
-handleText event text
+handleText :: EventSource -> ReplyToken -> T.Text -> IO ()
+handleText source replyToken text
   | "園田さん、プッシュ" `T.isPrefixOf` text = do
       let m = T.concat [ "https://karen.noraesae.net/send/"
-                       , identifier . source $ event
+                       , getId source
                        , "/メッセージ"
                        ]
-      api $ reply (replyToken event) [Message $ Text m]
+      api $ reply replyToken [Message $ Text m]
   | "園田さん、" `T.isPrefixOf` text = do
-      print $ source event
-      api $ reply (replyToken event) [Message $ Text $ T.drop 5 text]
+      print source
+      api $ reply replyToken [Message $ Text $ T.drop 5 text]
   | otherwise = return ()
 
 send :: ID -> T.Text -> Application

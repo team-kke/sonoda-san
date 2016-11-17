@@ -5,30 +5,22 @@ module Line.Messaging.Webhook.Types (
   ReplyToken,
   Body (..),
   Event (..),
+  EventTuple,
   ReplyableEvent,
   NonReplyableEvent,
-  MessageEvent,
-  FollowEvent,
-  UnfollowEvent,
-  JoinEvent,
-  LeaveEvent,
-  PostbackEvent,
-  BeaconEvent,
-  EventCommon,
-  source,
-  datetime,
-  replyToken,
-  message,
-  postback,
-  beacon,
+  getSource,
+  getDatetime,
+  getReplyToken,
+  getMessage,
+  getPostback,
+  getBeacon,
   EventSource (..),
-  identifier,
-  IncomingMessage (..),
+  getId,
+  EventMessage (..),
   BeaconData (..),
   ) where
 
 import Data.Aeson
-import Data.Aeson.Types (Parser)
 import Data.Time.Clock (UTCTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
 import Line.Messaging.API.Types
@@ -59,75 +51,56 @@ instance FromJSON Body where
   parseJSON (Object v) = Body <$> v .: "events"
   parseJSON _ = fail "Body"
 
-data ReplyableEvent a = ReplyableEvent EventSource UTCTime ReplyToken a deriving (Eq, Show)
-data NonReplyableEvent a = NonReplyableEvent EventSource UTCTime a deriving (Eq, Show)
-
-type MessageEvent = ReplyableEvent IncomingMessage
-type FollowEvent = ReplyableEvent ()
-type UnfollowEvent = NonReplyableEvent ()
-type JoinEvent = ReplyableEvent ()
-type LeaveEvent = NonReplyableEvent ()
-type PostbackEvent = ReplyableEvent T.Text
-type BeaconEvent = ReplyableEvent BeaconData
-
-class EventCommon m where
-  source :: m -> EventSource
-  datetime :: m -> UTCTime
-
-instance EventCommon (ReplyableEvent a) where
-  source (ReplyableEvent x _ _ _) = x
-  datetime (ReplyableEvent _ x _ _) = x
-
-instance EventCommon (NonReplyableEvent a) where
-  source (NonReplyableEvent x _ _) = x
-  datetime (NonReplyableEvent _ x _) = x
-
-replyToken :: ReplyableEvent a -> ReplyToken
-replyToken (ReplyableEvent _ _ x _) = x
-
-message :: MessageEvent -> IncomingMessage
-message (ReplyableEvent _ _ _ x) = x
-
-postback :: PostbackEvent -> T.Text
-postback (ReplyableEvent _ _ _ x) = x
-
-beacon :: BeaconEvent -> BeaconData
-beacon (ReplyableEvent _ _ _ x) = x
-
-data Event = MessageEvent MessageEvent
-           | FollowEvent FollowEvent
-           | UnfollowEvent UnfollowEvent
-           | JoinEvent JoinEvent
-           | LeaveEvent LeaveEvent
-           | PostbackEvent PostbackEvent
-           | BeaconEvent BeaconEvent
+data Event = MessageEvent (ReplyableEvent EventMessage)
+           | FollowEvent (ReplyableEvent ())
+           | UnfollowEvent (NonReplyableEvent ())
+           | JoinEvent (ReplyableEvent ())
+           | LeaveEvent (NonReplyableEvent ())
+           | PostbackEvent (ReplyableEvent T.Text)
+           | BeaconEvent (ReplyableEvent BeaconData)
            deriving (Eq, Show)
 
-parseCommon :: (EventSource -> UTCTime -> a) -> Object -> Parser a
-parseCommon f v = f <$> (v .: "source")
-                    <*> (posixSecondsToUTCTime . (/ 1000) . fromInteger <$> v .: "timestamp")
+type EventTuple r a = (EventSource, UTCTime, r, a)
+type ReplyableEvent a = EventTuple ReplyToken a
+type NonReplyableEvent a = EventTuple () a
 
-withReplyToken :: Parser (ReplyToken -> a) -> Object -> Parser a
-withReplyToken p v = p <*> v .: "replyToken"
+getSource :: EventTuple r a -> EventSource
+getSource (s, _, _, _) = s
+
+getDatetime :: EventTuple r a -> UTCTime
+getDatetime (_, t, _, _) = t
+
+getReplyToken :: ReplyableEvent a -> ReplyToken
+getReplyToken (_, _, r, _) = r
+
+getMessage :: ReplyableEvent EventMessage -> EventMessage
+getMessage (_, _, _, m) = m
+
+getPostback :: ReplyableEvent T.Text -> T.Text
+getPostback (_, _, _, d) = d
+
+getBeacon :: ReplyableEvent BeaconData -> BeaconData
+getBeacon (_, _, _, b) = b
 
 instance FromJSON Event where
   parseJSON (Object v) = v .: "type" >>= \ t ->
     case t :: T.Text of
-      "message" -> MessageEvent <$> (parseCommon ReplyableEvent v `withReplyToken` v
-                                      <*> v .: "message")
-      "follow" -> FollowEvent <$> (parseCommon ReplyableEvent v `withReplyToken` v
-                                    <*> return ())
-      "unfollow" -> UnfollowEvent <$> (parseCommon NonReplyableEvent v
-                                        <*> return ())
-      "join" -> JoinEvent <$> (parseCommon ReplyableEvent v `withReplyToken` v
-                                <*> return ())
-      "leave" -> LeaveEvent <$> (parseCommon NonReplyableEvent v
-                                  <*> return ())
-      "postback" -> PostbackEvent <$> (parseCommon ReplyableEvent v `withReplyToken` v
-                                        <*> ((v .: "postback") >>= (.: "data")))
-      "beacon" -> BeaconEvent <$> (parseCommon ReplyableEvent v `withReplyToken` v
-                                    <*> v .: "beacon")
+      "message" -> MessageEvent <$> (replyable v <*> v .: "message")
+      "follow" -> FollowEvent <$> (replyable v <*> none)
+      "unfollow" -> UnfollowEvent <$> (nonReplyable v <*> none)
+      "join" -> JoinEvent <$> (replyable v <*> none)
+      "leave" -> LeaveEvent <$> (nonReplyable v <*> none)
+      "postback" -> PostbackEvent <$> (replyable v <*> ((v .: "postback") >>= (.: "data")))
+      "beacon" -> BeaconEvent <$> (replyable v <*> v .: "beacon")
       _ -> fail "Event"
+    where
+      common o = (,,,) <$> (o .: "source")
+                       <*> (posixSecondsToUTCTime . (/ 1000) . fromInteger <$> o .: "timestamp")
+      withReplyToken p o = p <*> o .: "replyToken"
+      none = return ()
+      replyable o = common o `withReplyToken` o
+      nonReplyable o = common o <*> none
+
   parseJSON _ = fail "Event"
 
 data EventSource = User ID
@@ -135,10 +108,10 @@ data EventSource = User ID
                  | Room ID
                  deriving (Eq, Show)
 
-identifier :: EventSource -> ID
-identifier (User i) = i
-identifier (Group i) = i
-identifier (Room i) = i
+getId :: EventSource -> ID
+getId (User i) = i
+getId (Group i) = i
+getId (Room i) = i
 
 instance FromJSON EventSource where
   parseJSON (Object v) = v .: "type" >>= \ t ->
@@ -149,27 +122,27 @@ instance FromJSON EventSource where
       _ -> fail "EventSource"
   parseJSON _ = fail "EventSource"
 
-data IncomingMessage = TextIM ID Text
-                     | ImageIM ID
-                     | VideoIM ID
-                     | AudioIM ID
-                     | LocationIM ID Location
-                     | StickerIM ID Sticker
-                     deriving (Eq, Show)
+data EventMessage = TextEM ID Text
+                  | ImageEM ID
+                  | VideoEM ID
+                  | AudioEM ID
+                  | LocationEM ID Location
+                  | StickerEM ID Sticker
+                  deriving (Eq, Show)
 
-instance FromJSON IncomingMessage where
+instance FromJSON EventMessage where
   parseJSON (Object v) = v .: "type" >>= \ t ->
     case t :: T.Text of
-      "text" -> TextIM <$> v .: "id" <*> parseJSON (Object v)
-      "image" -> ImageIM <$> v .: "id"
-      "video" -> VideoIM <$> v .: "id"
-      "audio" -> AudioIM <$> v .: "id"
-      "location" -> LocationIM <$> v .: "id" <*> parseJSON (Object v)
-      "sticker" -> StickerIM <$> v .: "id" <*> parseJSON (Object v)
-      _ -> fail "IncomingMessage"
+      "text" -> TextEM <$> v .: "id" <*> parseJSON (Object v)
+      "image" -> ImageEM <$> v .: "id"
+      "video" -> VideoEM <$> v .: "id"
+      "audio" -> AudioEM <$> v .: "id"
+      "location" -> LocationEM <$> v .: "id" <*> parseJSON (Object v)
+      "sticker" -> StickerEM <$> v .: "id" <*> parseJSON (Object v)
+      _ -> fail "EventMessage"
   parseJSON _ = fail "IncommingMessage"
 
-data BeaconData = BeaconEnter { hwid :: ID }
+data BeaconData = BeaconEnter { getHWID :: ID }
                 deriving (Eq, Show)
 
 instance FromJSON BeaconData where
