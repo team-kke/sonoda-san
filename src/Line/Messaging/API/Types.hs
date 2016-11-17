@@ -1,7 +1,10 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Line.Messaging.API.Types (
   module Line.Messaging.Common.Types,
+  Messageable,
+  Message (..),
   Text (..),
   Image (..),
   Video (..),
@@ -11,8 +14,6 @@ module Line.Messaging.API.Types (
   ImageMap (..),
   ImageMapAction (..),
   ImageMapArea,
-  Message (..),
-  Messageable,
   Profile (..),
   ) where
 
@@ -28,13 +29,14 @@ class Messageable a where
   toValue :: a -> Value
   toValue a = object $ ("type" .= toType a) : toObject a
 
-data Message where
-  Message :: Messageable a => a -> Message
+data Message = forall a. (Show a, Messageable a) => Message a
+
+deriving instance Show Message
 
 instance ToJSON Message where
   toJSON (Message m) = toValue m
 
-newtype Text = Text T.Text
+newtype Text = Text { getText :: T.Text }
              deriving (Eq, Ord, Show)
 
 instance FromJSON Text where
@@ -46,8 +48,8 @@ instance Messageable Text where
   toType _ = "text"
   toObject (Text text) = [ "text" .= text ]
 
-data Image = Image { imageURL :: URL
-                   , imagePreviewURL :: URL
+data Image = Image { getImageURL :: URL
+                   , getImagePreviewURL :: URL
                    }
              deriving (Eq, Show)
 
@@ -57,8 +59,8 @@ instance Messageable Image where
                                       , "previewImageUrl" .= preview
                                       ]
 
-data Video = Video { videoURL :: URL
-                   , videoPreviewURL :: URL
+data Video = Video { getVideoURL :: URL
+                   , getVideoPreviewURL :: URL
                    }
              deriving (Eq, Show)
 
@@ -68,8 +70,8 @@ instance Messageable Video where
                                       , "previewImageUrl" .= preview
                                       ]
 
-data Audio = Audio { audioURL :: URL
-                   , audioDuration :: Integer
+data Audio = Audio { getAudioURL :: URL
+                   , getAudioDuration :: Integer
                    }
              deriving (Eq, Show)
 
@@ -79,10 +81,10 @@ instance Messageable Audio where
                                        , "duration" .= duration
                                        ]
 
-data Location = Location { title :: T.Text
-                         , address :: T.Text
-                         , latitude :: Double
-                         , longitude :: Double
+data Location = Location { getLocationTitle :: T.Text
+                         , getAddress :: T.Text
+                         , getLatitude :: Double
+                         , getLongitude :: Double
                          }
                 deriving (Eq, Show)
 
@@ -95,14 +97,14 @@ instance FromJSON Location where
 
 instance Messageable Location where
   toType _ = "location"
-  toObject location = [ "title" .= title location
-                      , "address" .= address location
-                      , "latitude" .= latitude location
-                      , "longitude" .= longitude location
-                      ]
+  toObject (Location title address latitude longitude) = [ "title" .= title
+                                                         , "address" .= address
+                                                         , "latitude" .= latitude
+                                                         , "longitude" .= longitude
+                                                         ]
 
-data Sticker = Sticker { package :: ID
-                       , sticker :: ID
+data Sticker = Sticker { getPackageID :: ID
+                       , getStickerID :: ID
                        }
                deriving (Eq, Show)
 
@@ -117,34 +119,33 @@ instance Messageable Sticker where
                                            , "stickerId" .= stickerId
                                            ]
 
-data ImageMap = ImageMap { baseImageURL :: URL
-                         , imageMapAltText :: T.Text
-                         , baseImageWidth :: Integer -- set to 1040
-                         , baseImageHeight :: Integer
-                         , actions :: [ImageMapAction]
+data ImageMap = ImageMap { getBaseImageURL :: URL
+                         , getIMAltText :: T.Text
+                         , getBaseImageSize :: (Integer, Integer) -- set w h to 1040
+                         , getIMActions :: [ImageMapAction]
                          }
                 deriving (Eq, Show)
 
 instance Messageable ImageMap where
   toType _ = "imagemap"
-  toObject (ImageMap url alt w h as) = [ "baseUrl" .= url
-                                       , "altText" .= alt
-                                       , "baseSize" .= object [ "width" .= w
-                                                              , "height" .= h
-                                                              ]
-                                       , "actions" .= toJSON as
-                                       ]
+  toObject (ImageMap url alt (w, h) as) = [ "baseUrl" .= url
+                                          , "altText" .= alt
+                                          , "baseSize" .= object [ "width" .= w
+                                                                 , "height" .= h
+                                                                 ]
+                                          , "actions" .= toJSON as
+                                          ]
 
-data ImageMapAction = ImageMapActionURI T.Text ImageMapArea
-                    | ImageMapActionMessage T.Text ImageMapArea
+data ImageMapAction = IMURIAction URL ImageMapArea
+                    | IMMessageAction T.Text ImageMapArea
                     deriving (Eq, Show)
 
 instance ToJSON ImageMapAction where
-  toJSON (ImageMapActionURI uri area) = object [ "type" .= ("uri" :: T.Text)
+  toJSON (IMURIAction uri area) = object [ "type" .= ("uri" :: T.Text)
                                                , "linkUri" .= uri
                                                , "area" .= toAreaJSON area
                                                ]
-  toJSON (ImageMapActionMessage text area) = object [ "type" .= ("message" :: T.Text)
+  toJSON (IMMessageAction text area) = object [ "type" .= ("message" :: T.Text)
                                                     , "text" .= text
                                                     , "area" .= toAreaJSON area
                                                     ]
@@ -154,10 +155,10 @@ type ImageMapArea = (Integer, Integer, Integer, Integer) -- x y width height
 toAreaJSON :: ImageMapArea -> Value
 toAreaJSON (x, y, w, h) = object [ "x" .= x, "y" .= y, "width" .= w, "height" .= h ]
 
-data Profile = Profile { userId :: ID
-                       , displayName :: T.Text
-                       , pictureURL :: Maybe URL
-                       , statusMessage :: Maybe T.Text
+data Profile = Profile { getUserID :: ID
+                       , getDisplayName :: T.Text
+                       , getPictureURL :: Maybe URL
+                       , getStatusMessage :: Maybe T.Text
                        }
                deriving (Eq, Show)
 
