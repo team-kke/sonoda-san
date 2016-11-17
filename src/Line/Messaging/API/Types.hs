@@ -1,3 +1,5 @@
+{-# LANGUAGE GADTs #-}
+
 module Line.Messaging.API.Types (
   module Line.Messaging.Common.Types,
   Text (..),
@@ -9,7 +11,7 @@ module Line.Messaging.API.Types (
   ImageMap (..),
   ImageMapAction (..),
   ImageMapArea,
-  OutgoingMessage (..),
+  Message (..),
   Messageable,
   Profile (..),
   ) where
@@ -26,23 +28,11 @@ class Messageable a where
   toValue :: a -> Value
   toValue a = object $ ("type" .= toType a) : toObject a
 
-data OutgoingMessage = TextOM Text
-                     | ImageOM Image
-                     | VideoOM Video
-                     | AudioOM Audio
-                     | LocationOM Location
-                     | StickerOM Sticker
-                     | ImageMapOM ImageMap
-                     deriving (Eq, Show)
+data Message where
+  Message :: Messageable a => a -> Message
 
-instance ToJSON OutgoingMessage where
-  toJSON (TextOM t) = toValue t
-  toJSON (ImageOM i) = toValue i
-  toJSON (VideoOM v) = toValue v
-  toJSON (AudioOM a) = toValue a
-  toJSON (LocationOM l) = toValue l
-  toJSON (StickerOM s) = toValue s
-  toJSON (ImageMapOM im) = toValue im
+instance ToJSON Message where
+  toJSON (Message m) = toValue m
 
 newtype Text = Text T.Text
              deriving (Eq, Ord, Show)

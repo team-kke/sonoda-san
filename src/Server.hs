@@ -40,7 +40,7 @@ handleEvent (MessageEvent event) = case message event of
   VideoIM id' -> downloadContent id' ".mp4"
   LocationIM  _ location -> do
     print location
-    api $ reply (replyToken event) [LocationOM location, TextOM $ Text "どこですか？"]
+    api $ reply (replyToken event) [Message location, Message $ Text "どこですか？"]
   _ -> return ()
 handleEvent _ = return ()
 
@@ -51,15 +51,15 @@ handleText event text
                        , identifier . source $ event
                        , "/メッセージ"
                        ]
-      api $ reply (replyToken event) [TextOM $ Text m]
+      api $ reply (replyToken event) [Message $ Text m]
   | "園田さん、" `T.isPrefixOf` text = do
       print $ source event
-      api $ reply (replyToken event) [TextOM $ Text $ T.drop 5 text]
+      api $ reply (replyToken event) [Message $ Text $ T.drop 5 text]
   | otherwise = return ()
 
 send :: ID -> T.Text -> Application
 send id' str _ f = do
-  api $ push id' [TextOM $ Text str]
+  api $ push id' [Message $ Text str]
   f $ response200 "ok"
 
 downloadContent :: ID -> String -> IO ()

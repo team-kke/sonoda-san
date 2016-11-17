@@ -43,7 +43,7 @@ post url body = do
   opts <- getOpts
   liftIO $ postWith opts url (toJSON body)
 
-push :: ID -> [OutgoingMessage] -> APIIO ()
+push :: ID -> [Message] -> APIIO ()
 push id' ms = do
   let url = "https://api.line.me/v2/bot/message/push"
   _ <- post url $ object [ "to" .= id'
@@ -51,7 +51,7 @@ push id' ms = do
                          ]
   return ()
 
-reply :: ReplyToken -> [OutgoingMessage] -> APIIO ()
+reply :: ReplyToken -> [Message] -> APIIO ()
 reply replyToken ms = do
   let url = "https://api.line.me/v2/bot/message/reply"
   _ <- post url $ object [ "replyToken" .= replyToken
