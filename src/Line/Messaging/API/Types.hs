@@ -165,16 +165,22 @@ data Template t = Template { getTemplateAltText :: T.Text
                            }
                   deriving (Eq, Show)
 
-instance Messageable (Template Buttons) where
-  toType _ = "template"
-  toObject (Template alt buttons) = [ "altText" .= alt
-                                    , "template" .= toJSON buttons
+templateType :: Template a -> T.Text
+templateType _ = "template"
+
+templateToObject :: ToJSON a => Template a -> [Pair]
+templateToObject (Template alt a) = [ "altText" .= alt
+                                    , "template" .= toJSON a
                                     ]
+
+instance Messageable (Template Buttons) where
+  toType = templateType
+  toObject = templateToObject
 
 data Buttons = Buttons { getThumbnailImageURL :: URL
                        , getButtonsTitle :: T.Text
                        , getButtonsText :: T.Text
-                       , getTemplateActions :: [TemplateAction]
+                       , getButtonsActions :: [TemplateAction]
                        }
                deriving (Eq, Show)
 
