@@ -17,6 +17,7 @@ module Line.Messaging.API.Types (
   ImageMapArea,
   Template (..),
   Buttons (..),
+  Confirm (..),
   Label,
   TemplateAction (..),
   Profile (..),
@@ -177,6 +178,10 @@ instance Messageable (Template Buttons) where
   toType = templateType
   toObject = templateToObject
 
+instance Messageable (Template Confirm) where
+  toType = templateType
+  toObject = templateToObject
+
 data Buttons = Buttons { getThumbnailImageURL :: URL
                        , getButtonsTitle :: T.Text
                        , getButtonsText :: T.Text
@@ -191,6 +196,17 @@ instance ToJSON Buttons where
                                                    , "text" .= text
                                                    , "actions" .= toJSON actions
                                                    ]
+
+data Confirm = Confirm { getConfirmText :: T.Text
+                       , getConfirmActions :: [TemplateAction]
+                       }
+               deriving (Eq, Show)
+
+instance ToJSON Confirm where
+  toJSON (Confirm text actions) = object [ "type" .= ("confirm" :: T.Text)
+                                         , "text" .= text
+                                         , "actions" .= toJSON actions
+                                         ]
 
 type Label = T.Text
 
