@@ -27,10 +27,13 @@ module Line.Messaging.API.Types (
   APIErrorBody (..),
   ) where
 
+import Control.Applicative ((<|>))
+import Control.Exception (SomeException)
 import Data.Aeson (FromJSON(..), ToJSON(..), Value(..), object, (.:), (.=))
 import Data.Aeson.Types (Pair)
 import Line.Messaging.Common.Types
 import qualified Data.Text as T
+import qualified Data.ByteString.Lazy as BL
 
 class Messageable a where
   toType :: a -> T.Text
@@ -274,22 +277,24 @@ instance FromJSON Profile where
                                  <*> v .: "statusMessage"
   parseJSON _ = fail "Profile"
 
-data APIError = BadRequest APIErrorBody
-              | Unauthorized APIErrorBody
-              | Forbidden APIErrorBody
-              | TooManyRequests APIErrorBody
-              | InternalServerError APIErrorBody
-              | UndefinedError
-              deriving (Eq, Show)
+data APIError = BadRequest (Maybe APIErrorBody)
+              | Unauthorized (Maybe APIErrorBody)
+              | Forbidden (Maybe APIErrorBody)
+              | TooManyRequests (Maybe APIErrorBody)
+              | InternalServerError (Maybe APIErrorBody)
+              | UndefinedStatusCode Int BL.ByteString
+              | JSONDecodeError String
+              | UndefinedError SomeException
+              deriving Show
 
 data APIErrorBody = APIErrorBody { getErrorMessage :: T.Text
                                  , getErrorProperty :: Maybe T.Text
                                  , getErrorDetails :: Maybe [APIErrorBody]
                                  }
-                  deriving (Eq, Show)
+                  deriving Show
 
 instance FromJSON APIErrorBody where
   parseJSON (Object v) = APIErrorBody <$> v .: "message"
-                                      <*> v .: "property"
-                                      <*> v .: "details"
+                                      <*> (v .: "property" <|> return Nothing)
+                                      <*> (v .: "details" <|> return Nothing)
   parseJSON _ = fail "APIErrorBody"

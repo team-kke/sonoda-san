@@ -10,38 +10,58 @@ module Line.Messaging.API (
   leaveGroup,
   ) where
 
+import Control.Exception (SomeException(..))
 import Control.Lens ((&), (.~), (^.))
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (runReaderT, ReaderT, ask)
-import Control.Monad.Trans.Except (runExceptT, ExceptT)
-import Data.Aeson (ToJSON(..), (.=), object)
+import Control.Monad.Trans.Except (runExceptT, ExceptT, throwE, catchE)
+import Data.Aeson (ToJSON(..), (.=), object, decode', eitherDecode')
 import Data.Text.Encoding (encodeUtf8)
 import Line.Messaging.API.Types
 import Line.Messaging.Types (ChannelAccessToken, ReplyToken)
-import Network.Wreq (getWith, postWith, defaults, header, Options, Response, responseBody, asJSON)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
+import qualified Network.Wreq as Wr
 
 type APIIO a = ReaderT ChannelAccessToken (ExceptT APIError IO) a
 
 runAPI :: IO ChannelAccessToken -> APIIO a -> IO (Either APIError a)
 runAPI getToken api = getToken >>= runExceptT . runReaderT api
 
-getOpts :: APIIO Options
+getOpts :: APIIO Wr.Options
 getOpts = do
   token <- encodeUtf8 <$> ask
-  return $ defaults & header "Authorization" .~ [ "Bearer " `B.append` token ]
+  return $ Wr.defaults & Wr.header "Authorization" .~ [ "Bearer " `B.append` token ]
+                       & Wr.checkStatus .~ Just (\ _ _ _ -> Nothing) -- do not throw StatusCodeException
 
-get :: String -> APIIO (Response BL.ByteString)
+handleError :: SomeException -> (ExceptT APIError IO) a
+handleError = throwE . UndefinedError
+
+runReqIO :: IO (Wr.Response BL.ByteString) -> APIIO BL.ByteString
+runReqIO reqIO = lift $ do
+  res <- liftIO reqIO `catchE` handleError
+  let statusCode = res ^. Wr.responseStatus . Wr.statusCode
+  let body = res ^. Wr.responseBody
+  case statusCode of
+    200 -> return $ body
+    400 -> throwE $ BadRequest (decode' body)
+    401 -> throwE $ Unauthorized (decode' body)
+    403 -> throwE $ Forbidden (decode' body)
+    429 -> throwE $ TooManyRequests (decode' body)
+    500 -> throwE $ InternalServerError (decode' body)
+    _ -> throwE $ UndefinedStatusCode statusCode body
+
+get :: String -> APIIO BL.ByteString
 get url = do
   opts <- getOpts
-  liftIO $ getWith opts url
+  runReqIO $ Wr.getWith opts url
 
-post :: ToJSON a => String -> a -> APIIO (Response BL.ByteString)
+post :: ToJSON a => String -> a -> APIIO BL.ByteString
 post url body = do
   opts <- getOpts
-  liftIO $ postWith opts url (toJSON body)
+  runReqIO $ Wr.postWith opts url (toJSON body)
 
 push :: ID -> [Message] -> APIIO ()
 push id' ms = do
@@ -65,14 +85,15 @@ getContent id' = do
                    , T.unpack id'
                    , "/content"
                    ]
-  r <- get url
-  return $ r ^. responseBody
+  get url
 
 getProfile :: ID -> APIIO Profile
 getProfile id' = do
   let url = "https://api.line.me/v2/bot/profile/" ++ T.unpack id'
-  r <- get url >>= asJSON
-  return $ r ^. responseBody
+  bs <- get url
+  case eitherDecode' bs of
+    Right profile -> return profile
+    Left errStr -> lift . throwE . JSONDecodeError $ errStr
 
 leave :: String -> ID -> APIIO ()
 leave type' id' = do
