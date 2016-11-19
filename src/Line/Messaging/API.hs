@@ -13,6 +13,7 @@ module Line.Messaging.API (
 import Control.Lens ((&), (.~), (^.))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Reader (runReaderT, ReaderT, ask)
+import Control.Monad.Trans.Except (runExceptT, ExceptT)
 import Data.Aeson (ToJSON(..), (.=), object)
 import Data.Text.Encoding (encodeUtf8)
 import Line.Messaging.API.Types
@@ -22,11 +23,10 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 
--- FIXME: Add ExceptT for error handling
-type APIIO a = ReaderT ChannelAccessToken IO a
+type APIIO a = ReaderT ChannelAccessToken (ExceptT APIError IO) a
 
-runAPI :: IO ChannelAccessToken -> APIIO a -> IO a
-runAPI getToken api = getToken >>= runReaderT api
+runAPI :: IO ChannelAccessToken -> APIIO a -> IO (Either APIError a)
+runAPI getToken api = getToken >>= runExceptT . runReaderT api
 
 getOpts :: APIIO Options
 getOpts = do

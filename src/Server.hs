@@ -30,7 +30,7 @@ handler events = do
   forM_ events handleEvent
   return Ok
 
-api :: APIIO a -> IO a
+api :: APIIO a -> IO (Either APIError a)
 api = runAPI getChannelAccessToken
 
 handleEvent :: Event -> IO ()
@@ -40,7 +40,8 @@ handleEvent (MessageEvent event) = case getMessage event of
   VideoEM id' -> downloadContent id' ".mp4"
   LocationEM  _ location -> do
     print location
-    api $ reply (getReplyToken event) [Message location, Message $ Text "どこですか？"]
+    _ <- api $ reply (getReplyToken event) [Message location, Message $ Text "どこですか？"]
+    return ()
   _ -> return ()
 handleEvent _ = return ()
 
@@ -51,19 +52,21 @@ handleText source replyToken text
                        , getId source
                        , "/メッセージ"
                        ]
-      api $ reply replyToken [Message $ Text m]
+      _ <- api $ reply replyToken [Message $ Text m]
+      return ()
   | "園田さん、" `T.isPrefixOf` text = do
       print source
-      api $ reply replyToken [Message $ Text $ T.drop 5 text]
+      _ <- api $ reply replyToken [Message $ Text $ T.drop 5 text]
+      return ()
   | otherwise = return ()
 
 send :: ID -> T.Text -> Application
 send id' str _ f = do
-  api $ push id' [Message $ Text str]
+  _ <- api $ push id' [Message $ Text str]
   f $ response200 "ok"
 
 downloadContent :: ID -> String -> IO ()
 downloadContent id' ext = do
-  c <- api $ getContent id'
+  c <- either (const "") id <$> (api $ getContent id')
   name <- (++ ext) . toString <$> nextRandom
-  BL.writeFile name  c
+  BL.writeFile name c
