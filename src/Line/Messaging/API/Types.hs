@@ -23,6 +23,8 @@ module Line.Messaging.API.Types (
   Label,
   TemplateAction (..),
   Profile (..),
+  APIError (..),
+  APIErrorBody (..),
   ) where
 
 import Data.Aeson (FromJSON(..), ToJSON(..), Value(..), object, (.:), (.=))
@@ -271,3 +273,23 @@ instance FromJSON Profile where
                                  <*> v .: "pictureUrl"
                                  <*> v .: "statusMessage"
   parseJSON _ = fail "Profile"
+
+data APIError = BadRequest APIErrorBody
+              | Unauthorized APIErrorBody
+              | Forbidden APIErrorBody
+              | TooManyRequests APIErrorBody
+              | InternalServerError APIErrorBody
+              | UndefinedError
+              deriving (Eq, Show)
+
+data APIErrorBody = APIErrorBody { getErrorMessage :: T.Text
+                                 , getErrorProperty :: Maybe T.Text
+                                 , getErrorDetails :: Maybe [APIErrorBody]
+                                 }
+                  deriving (Eq, Show)
+
+instance FromJSON APIErrorBody where
+  parseJSON (Object v) = APIErrorBody <$> v .: "message"
+                                      <*> v .: "property"
+                                      <*> v .: "details"
+  parseJSON _ = fail "APIErrorBody"
