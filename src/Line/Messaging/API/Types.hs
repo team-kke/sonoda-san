@@ -18,6 +18,8 @@ module Line.Messaging.API.Types (
   Template (..),
   Buttons (..),
   Confirm (..),
+  Carousel (..),
+  Column (..),
   Label,
   TemplateAction (..),
   Profile (..),
@@ -182,7 +184,11 @@ instance Messageable (Template Confirm) where
   toType = templateType
   toObject = templateToObject
 
-data Buttons = Buttons { getThumbnailImageURL :: URL
+instance Messageable (Template Carousel) where
+  toType = templateType
+  toObject = templateToObject
+
+data Buttons = Buttons { getButtonsThumbnailURL :: URL
                        , getButtonsTitle :: T.Text
                        , getButtonsText :: T.Text
                        , getButtonsActions :: [TemplateAction]
@@ -207,6 +213,28 @@ instance ToJSON Confirm where
                                          , "text" .= text
                                          , "actions" .= toJSON actions
                                          ]
+
+data Carousel = Carousel { getColumns :: [Column] }
+              deriving (Eq, Show)
+
+instance ToJSON Carousel where
+  toJSON (Carousel columns) = object [ "type" .= ("carousel" :: T.Text)
+                                     , "columns" .= toJSON columns
+                                     ]
+
+data Column = Column { getColumnThumbnailURL :: URL
+                     , getColumnTitle :: T.Text
+                     , getColumnText :: T.Text
+                     , getColumnActions :: [TemplateAction]
+                     }
+              deriving (Eq, Show)
+
+instance ToJSON Column where
+  toJSON (Column url title text actions) = object [ "thumbnailImageUrl" .= url
+                                                  , "title" .= title
+                                                  , "text" .= text
+                                                  , "actions" .= toJSON actions
+                                                  ]
 
 type Label = T.Text
 
