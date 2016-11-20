@@ -29,6 +29,7 @@ library
                      , http-types
                      , bytestring
                      , text
+                     , attoparsec
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
 
