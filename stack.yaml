@@ -1,9 +1,7 @@
 resolver: lts-7.9
 packages:
-- location: .
-- location:
-    git: https://github.com/noraesae/line.git
-    commit: 0a8149bcb3bb654fd9fe9fbd0e2ca7ad1e2232e3
-extra-deps: []
+- '.'
+extra-deps:
+- line-1.0.0.1
 flags: {}
 extra-package-dbs: []

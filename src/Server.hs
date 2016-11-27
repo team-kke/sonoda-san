@@ -39,7 +39,7 @@ handleText :: EventSource -> ReplyToken -> T.Text -> APIIO ()
 handleText source replyToken text
   | "園田さん、プッシュ" `T.isPrefixOf` text = do
       let m = T.concat [ "https://karen.noraesae.net/send/"
-                       , getId source
+                       , getID source
                        , "/こんにちは"
                        ]
       reply replyToken [Message . Text $ m]
