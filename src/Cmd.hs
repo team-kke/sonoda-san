@@ -2,6 +2,7 @@ module Cmd (
   getConfigPath,
   ) where
 
+import Data.Semigroup ((<>))
 import Options.Applicative
 
 data Cmd = Cmd { configPath :: FilePath

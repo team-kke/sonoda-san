@@ -5,7 +5,6 @@ module Server (
 import Calculator (calc)
 import Config (getChannelSecret, getChannelAccessToken)
 import Control.Monad (forM_)
-import Data.Functor (($>))
 import Line.Messaging.API
 import Line.Messaging.Webhook hiding (webhook)
 import Network.Wai
@@ -24,8 +23,8 @@ webhook req f = do
   secret <- getChannelSecret
   webhookApp secret handler defaultOnFailure req f
 
-handler :: [Event] -> IO WebhookResult
-handler events = forM_ events handleEvent $> Ok
+handler :: [Event] -> IO ()
+handler events = forM_ events handleEvent
 
 handleEvent :: Event -> IO ()
 handleEvent (MessageEvent event) = case getMessage event of
