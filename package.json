@@ -1,0 +1,19 @@
+{
+  "name": "sonoda-san",
+  "version": "0.0.0",
+  "description": "喋る園田さん",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo no test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/team-kke/sonoda-san.git"
+  },
+  "author": "Hyunje Jun <me@noraesae.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/team-kke/sonoda-san/issues"
+  },
+  "homepage": "https://github.com/team-kke/sonoda-san"
+}
