@@ -2,9 +2,10 @@
   "name": "sonoda-san",
   "version": "0.0.0",
   "description": "喋る園田さん",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo no test"
+    "test": "echo no test",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,14 @@
   "bugs": {
     "url": "https://github.com/team-kke/sonoda-san/issues"
   },
-  "homepage": "https://github.com/team-kke/sonoda-san"
+  "homepage": "https://github.com/team-kke/sonoda-san",
+  "dependencies": {
+    "@line/bot-sdk": "^5.0.1",
+    "@types/express": "^4.0.39",
+    "axios": "^0.17.1",
+    "express": "^4.16.2"
+  },
+  "devDependencies": {
+    "typescript": "^2.6.1"
+  }
 }

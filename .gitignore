@@ -56,3 +56,10 @@ typings/
 
 # dotenv environment variables file
 .env
+
+# Built
+dist
+
+# Downloaded
+downloaded/*
+!downloaded/.gitkeep
