@@ -22,6 +22,5 @@ app.post('/callback', middleware(env), (req, res) => {
   res.end();
 });
 
-
 const port = env.port || 3000;
 app.listen(port, () => console.log(`listening ${port}`));
