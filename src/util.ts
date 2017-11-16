@@ -10,9 +10,10 @@ export async function download(from: string, to: string) {
   });
 
   return new Promise((resolve, reject) => {
-    data.pipe(createWriteStream(to));
-    data.on('end', resolve);
-    data.on('error', reject);
+    const writable = createWriteStream(to);
+    data.pipe(writable);
+    writable.on('close', resolve);
+    writable.on('error', reject);
   });
 }
 
