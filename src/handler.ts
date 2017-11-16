@@ -1,6 +1,7 @@
 import axios from 'axios';
 import env from './env';
-import { download } from './util';
+import { download, rm } from './util';
+import * as im from './imagemagick';
 import {
   Client,
   ImageMessage,
@@ -39,32 +40,38 @@ export default async function handleTextMessage(
   let m;
   const imgExp = /<img src='(.+?)'/g;
   while (m = imgExp.exec(res.data)) {
-    images.push(m[1].replace('&amp;', '&').replace('gif', 'jpeg'));
+    images.push(m[1].replace('&amp;', '&'));
   }
 
   if (images.length === 0) {
     return;
   }
 
-  // replyMessage can only send up to 5 messages
-  images = images.slice(0, 5);
-
-  const urls: string[] = [];
-
-  await Promise.all(
-    images.map(async (url, idx) => {
-      const path = `downloaded/${message.id}_${idx}.jpeg`;
-      await download(url, path);
-      urls.push(`${env.baseURL}/${path}`);
-    })
+  images = await Promise.all(
+    images.map(
+      async (url, idx) => {
+        const gif = `downloaded/${message.id}_${idx}.gif`;
+        const jpeg = `downloaded/${message.id}_${idx}.jpeg`;
+        await download(url, gif);
+        await im.convert(gif, 'gif', jpeg, 'jpeg');
+        await rm(gif);
+        return jpeg;
+      }
+    )
   );
+
+  const resultImagePath = `downloaded/${message.id}.jpeg`;
+  const previewImagePath = `downloaded/${message.id}_preview.jpeg`;
+  await im.smush(images, resultImagePath);
+  await im.resize(resultImagePath, '240x', previewImagePath);
+  await Promise.all(images.map(rm));
 
   client.replyMessage(
     replyToken,
-    urls.map((url) => ({
+    {
       type: 'image',
-      originalContentUrl: url,
-      previewImageUrl: url,
-    }) as ImageMessage)
+      originalContentUrl: `${env.baseURL}/${resultImagePath}`,
+      previewImageUrl: `${env.baseURL}/${previewImagePath}`,
+    }
   );
 }
