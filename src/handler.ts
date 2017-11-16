@@ -53,7 +53,7 @@ export default async function handleTextMessage(
         const gif = `downloaded/${message.id}_${idx}.gif`;
         const jpeg = `downloaded/${message.id}_${idx}.jpeg`;
         await download(url, gif);
-        await im.convert(gif, 'gif', jpeg, 'jpeg');
+        await im.convert(gif, jpeg);
         await rm(gif);
         return jpeg;
       }

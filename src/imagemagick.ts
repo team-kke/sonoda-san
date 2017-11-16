@@ -1,12 +1,7 @@
 import { exec } from './util';
 
-export async function convert(
-  from: string,
-  fromFormat: string,
-  to: string,
-  toFormat: string,
-) {
-  return exec(`convert ${fromFormat}:${from} ${toFormat}:${to}`);
+export async function convert(from: string, to: string) {
+  return exec(`convert ${from} ${to}`);
 }
 
 export async function smush(images: string[], to: string) {
